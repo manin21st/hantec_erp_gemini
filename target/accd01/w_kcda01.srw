@@ -3,26 +3,11 @@ $PBExportComments$계정과목 등록
 forward
 global type w_kcda01 from w_inherite
 end type
-type cbx_1 from checkbox within w_kcda01
-end type
-type cbx_2 from checkbox within w_kcda01
-end type
-type dw_1 from datawindow within w_kcda01
-end type
-type dw_list from datawindow within w_kcda01
-end type
-type st_2 from statictext within w_kcda01
-end type
-type sle_1 from singlelineedit within w_kcda01
-end type
-type p_copy from uo_picture within w_kcda01
-end type
-type dw_copy from datawindow within w_kcda01
-end type
 end forward
 
 global type w_kcda01 from w_inherite
-int Width=4736, Height=2524
+integer width = 4736
+integer height = 2524
 string title = "계정과목 등록"
 cbx_1 cbx_1
 cbx_2 cbx_2
@@ -33,6 +18,7 @@ sle_1 sle_1
 p_copy p_copy
 dw_copy dw_copy
 end type
+
 global w_kcda01 w_kcda01
 
 type variables
@@ -87,7 +73,7 @@ sYesanGbn = dw_1.GetItemString(ll_row,"yesan_gu")
 sUpAcc    = dw_1.GetItemString(ll_row,"sacc_cd") 
 sCusGbn   = dw_1.GetItemString(ll_row,"cus_gu") 
 sGbn6     = dw_1.GetItemString(ll_row,"gbn6") 
-sRemark4  = dw_1.GetItemString(ll_row,"remark4") 							/*외화관리여부*/
+sRemark4  = dw_1.GetItemString(ll_row,"remark4") /*외화관리여부*/
 
 iOpenCount = dw_1.GetItemNumber(ll_row,"opencount")
 
@@ -144,7 +130,7 @@ IF sYesanGbn = "" OR IsNull(sYesanGbn) THEN
 	Return -1
 END IF
 
-IF sAcc2 = '00' AND sAcc1 = sUpAcc THEN				/*계정코드 '00'이면 상위계정 <> 계정과목:2001.05.21*/
+IF sAcc2 = '00' AND sAcc1 = sUpAcc THEN	/*계정코드 '00'이면 상위계정 <> 계정과목:2001.05.21*/
 	F_MessageChk(16,'[상위계정 = 계정과목]')
 	dw_1.SetItem(ll_row,"sacc_cd",sNull)
 	dw_1.SetColumn("sacc_cd")
@@ -152,7 +138,7 @@ IF sAcc2 = '00' AND sAcc1 = sUpAcc THEN				/*계정코드 '00'이면 상위계�
 	Return -1
 END IF
 
-IF sAcc2 = '00' AND sBalGu <> '4' THEN					/*계정코드 '00'이고 '재무제표'이면 하위계정존재 불가:2001.05.21*/
+IF sAcc2 = '00' AND sBalGu <> '4' THEN	/*계정코드 '00'이고 '재무제표'이면 하위계정존재 불가:2001.05.21*/
 	select Count(*) Into :iCount from kfz01om0 where sacc_cd = :sAcc1;
 	
 	if sqlca.sqlcode = 0 and iCount <> 0 then
@@ -163,14 +149,14 @@ IF sAcc2 = '00' AND sBalGu <> '4' THEN					/*계정코드 '00'이고 '재무제�
 	end if
 END IF
 
-IF sGbn6 = 'Y' AND sCusGbn <> 'Y' THEN				/*거래처원장관리 'Y'이면 거래처 체크는 'Y':2001.05.21*/
+IF sGbn6 = 'Y' AND sCusGbn <> 'Y' THEN	/*거래처원장관리 'Y'이면 거래처 체크는 'Y':2001.05.21*/
 	F_MessageChk(1,'[거래처체크여부]')
 	dw_1.SetColumn("cus_gu")
 	dw_1.SetFocus()
 	Return -1	
 END IF
 
-IF sBalGu <> '4' THEN									/*'재무제표'항목아니면 From,To는 자기자신:2001.05.21*/
+IF sBalGu <> '4' THEN	/*'재무제표'항목아니면 From,To는 자기자신:2001.05.21*/
 	dw_1.SetItem(ll_row,"fracc1_cd",sAcc1)
 	dw_1.SetItem(ll_row,"fracc2_cd",sAcc2)
 	dw_1.SetItem(ll_row,"toacc1_cd",sAcc1)
@@ -218,7 +204,7 @@ sBalGbn = dw_1.GetItemString(dw_1.GetRow(),"bal_gu")
 IF sBalGbn = '4' THEN Return
 
 SELECT SUBSTR("SYSCNFG"."DATANAME",1,5),	  SUBSTR("SYSCNFG"."DATANAME",6,2)		/*부도계정*/
-	INTO :sBudoAcc1,								  :sBudoAcc2  
+	INTO :sBudoAcc1,				  :sBudoAcc2  
 	FROM "SYSCNFG"  
    WHERE ( "SYSCNFG"."SYSGU" = 'A' ) AND ( "SYSCNFG"."SERIAL" = 1 ) AND  
          ( "SYSCNFG"."LINENO" = '18' )   ;
@@ -262,7 +248,7 @@ ELSEIF sVatGbn = 'Y' THEN
 	END IF	
 ELSEIF sRBilGbn = 'Y' THEN
 	IF sDcGbn = '1' THEN
-		IF Acc1 = sBudoAcc1 AND Acc2 = sBudoAcc2 THEN					/*부도계정*/
+		IF Acc1 = sBudoAcc1 AND Acc2 = sBudoAcc2 THEN	/*부도계정*/
 			SetNull(sWinIdC)
 			sWinIdD = 'w_kglb01d1'
 		ELSE
@@ -303,45 +289,45 @@ String  sDcGbn,sRemark4,sTaxGbn,sGbn4,sGbn1,sChGbn, sDriveGbn
 dw_1.AcceptText()
 sDcGbn   = dw_1.GetItemString(dw_1.getrow(),"dc_gu")
 sRemark4 = dw_1.GetItemString(dw_1.getrow(),"remark4")
-IF sRemark4 = 'Y' THEN							/*외화관리='Y'*/
-	delete from kfz01ot0 where acc1_cd = :sAcc1_Cd and acc2_cd = :sAcc2_Cd;									/*관리자료 삭제*/
+IF sRemark4 = 'Y' THEN	/*외화관리='Y'*/
+	delete from kfz01ot0 where acc1_cd = :sAcc1_Cd and acc2_cd = :sAcc2_Cd;	/*관리자료 삭제*/
 	
-	insert into kfz01ot0									/*차변-외화종류*/
-		(acc1_cd,			acc2_cd,			dc_gu,		seq_no,			kwan_colid,		kwan_colnm,		reqchk,		ref_gbn,		kwan_type)
+	insert into kfz01ot0	/*차변-외화종류*/
+		(acc1_cd,			acc2_cd,		dc_gu,		seq_no,			kwan_colid,		kwan_colnm,		reqchk,		ref_gbn,		kwan_type)
 	values
 		(:sAcc1_Cd,			:sAcc2_Cd,		'1',			1,					'y_curr',		'외화종류',		'Y',			null,			'1');
 		
-	insert into kfz01ot0									/*차변-외화금액*/
-		(acc1_cd,			acc2_cd,			dc_gu,		seq_no,			kwan_colid,		kwan_colnm,		reqchk,		ref_gbn,		kwan_type)
+	insert into kfz01ot0	/*차변-외화금액*/
+		(acc1_cd,			acc2_cd,		dc_gu,		seq_no,			kwan_colid,		kwan_colnm,		reqchk,		ref_gbn,		kwan_type)
 	values
 		(:sAcc1_Cd,			:sAcc2_Cd,		'1',			2,					'y_amt',			'외화금액',		'Y',			null,			'0');
 		
-	insert into kfz01ot0									/*차변-적용환율*/
-		(acc1_cd,			acc2_cd,			dc_gu,		seq_no,			kwan_colid,		kwan_colnm,		reqchk,		ref_gbn,		kwan_type)
+	insert into kfz01ot0	/*차변-적용환율*/
+		(acc1_cd,			acc2_cd,		dc_gu,		seq_no,			kwan_colid,		kwan_colnm,		reqchk,		ref_gbn,		kwan_type)
 	values
 		(:sAcc1_Cd,			:sAcc2_Cd,		'1',			3,					'y_rate',		'적용환율',		'Y',			null,			'0');
 		
-	insert into kfz01ot0									/*대변-외화종류*/
-		(acc1_cd,			acc2_cd,			dc_gu,		seq_no,			kwan_colid,		kwan_colnm,		reqchk,		ref_gbn,		kwan_type)
+	insert into kfz01ot0	/*대변-외화종류*/
+		(acc1_cd,			acc2_cd,		dc_gu,		seq_no,			kwan_colid,		kwan_colnm,		reqchk,		ref_gbn,		kwan_type)
 	values
 		(:sAcc1_Cd,			:sAcc2_Cd,		'2',			1,					'y_curr',		'외화종류',		'Y',			null,			'1');
 		
-	insert into kfz01ot0									/*대변-외화금액*/
-		(acc1_cd,			acc2_cd,			dc_gu,		seq_no,			kwan_colid,		kwan_colnm,		reqchk,		ref_gbn,		kwan_type)
+	insert into kfz01ot0	/*대변-외화금액*/
+		(acc1_cd,			acc2_cd,		dc_gu,		seq_no,			kwan_colid,		kwan_colnm,		reqchk,		ref_gbn,		kwan_type)
 	values
 		(:sAcc1_Cd,			:sAcc2_Cd,		'2',			2,					'y_amt',			'외화금액',		'Y',			null,			'0');
 		
-	insert into kfz01ot0									/*대변-적용환율*/
-		(acc1_cd,			acc2_cd,			dc_gu,		seq_no,			kwan_colid,		kwan_colnm,		reqchk,		ref_gbn,		kwan_type)
+	insert into kfz01ot0	/*대변-적용환율*/
+		(acc1_cd,			acc2_cd,		dc_gu,		seq_no,			kwan_colid,		kwan_colnm,		reqchk,		ref_gbn,		kwan_type)
 	values
 		(:sAcc1_Cd,			:sAcc2_Cd,		'2',			3,					'y_rate',		'적용환율',		'Y',			null,			'0');
 END IF
 
 sDcGbn   = dw_1.GetItemString(dw_1.getrow(),"dc_gu")
-sTaxGbn = dw_1.GetItemString(dw_1.getrow(),"taxgbn")			/*과세유형관리='Y'*/
+sTaxGbn = dw_1.GetItemString(dw_1.getrow(),"taxgbn")	/*과세유형관리='Y'*/
 IF sTaxGbn = 'Y' THEN
 	delete from kfz01ot0 where acc1_cd = :sAcc1_Cd and acc2_cd = :sAcc2_Cd and dc_gu = :sDcGbn and 
-										(kwan_colid = 'taxgbn' );	
+						(kwan_colid = 'taxgbn' );	
 	
 	select nvl(Max(seq_no),0)	into :iMaxSeq 
 		from kfz01ot0 where acc1_cd = :sAcc1_Cd and acc2_cd = :sAcc2_Cd and dc_gu = :sDcGbn;
@@ -349,38 +335,38 @@ IF sTaxGbn = 'Y' THEN
 	if IsNull(iMaxSeq) then iMaxSeq = 0
 	iMaxSeq = iMaxSeq + 1
 		
-	insert into kfz01ot0									/*차대변에 '과세유형관리'추가*/
-		(acc1_cd,			acc2_cd,			dc_gu,		seq_no,			kwan_colid,		kwan_colnm,		reqchk,		ref_gbn,		kwan_type)
+	insert into kfz01ot0	/*차대변에 '과세유형관리'추가*/
+		(acc1_cd,			acc2_cd,		dc_gu,		seq_no,			kwan_colid,		kwan_colnm,		reqchk,		ref_gbn,		kwan_type)
 	values
 		(:sAcc1_Cd,			:sAcc2_Cd,		:sDcGbn,		:iMaxSeq,		'taxgbn',		'과세유형관리',	'Y',			null,			'1');
 
 else
 	delete from kfz01ot0 where acc1_cd = :sAcc1_Cd and acc2_cd = :sAcc2_Cd and dc_gu = :sDcGbn and 
-										(kwan_colid = 'taxgbn' );		
+						(kwan_colid = 'taxgbn' );		
 END IF
 
-sGbn4 = dw_1.GetItemString(dw_1.getrow(),"gbn4")				/*어음계정관리 = 'Y'*/
+sGbn4 = dw_1.GetItemString(dw_1.getrow(),"gbn4")	/*어음계정관리 = 'Y'*/
 IF sGbn4 = 'Y' THEN
 	delete from kfz01ot0 where acc1_cd = :sAcc1_Cd and acc2_cd = :sAcc2_Cd;	
 			
-	insert into kfz01ot0									/*차대변에 추가*/
-		(acc1_cd,			acc2_cd,			dc_gu,		seq_no,			kwan_colid,		kwan_colnm,		reqchk,		ref_gbn,		kwan_type)
+	insert into kfz01ot0	/*차대변에 추가*/
+		(acc1_cd,			acc2_cd,		dc_gu,		seq_no,			kwan_colid,		kwan_colnm,		reqchk,		ref_gbn,		kwan_type)
 	values
 		(:sAcc1_Cd,			:sAcc2_Cd,		:sDcGbn,		1,					'k_symd',		'발행일자',		'Y',			null,			'1');
 
-	insert into kfz01ot0									
-		(acc1_cd,			acc2_cd,			dc_gu,		seq_no,			kwan_colid,		kwan_colnm,		reqchk,		ref_gbn,		kwan_type)
+	insert into kfz01ot0	
+		(acc1_cd,			acc2_cd,		dc_gu,		seq_no,			kwan_colid,		kwan_colnm,		reqchk,		ref_gbn,		kwan_type)
 	values
 		(:sAcc1_Cd,			:sAcc2_Cd,		:sDcGbn,		2,					'k_eymd',		'만기일자',		'Y',			null,			'1');
 
-	insert into kfz01ot0									
-		(acc1_cd,			acc2_cd,			dc_gu,		seq_no,			kwan_colid,		kwan_colnm,		reqchk,		ref_gbn,		kwan_type)
+	insert into kfz01ot0	
+		(acc1_cd,			acc2_cd,		dc_gu,		seq_no,			kwan_colid,		kwan_colnm,		reqchk,		ref_gbn,		kwan_type)
 	values
 		(:sAcc1_Cd,			:sAcc2_Cd,		:sDcGbn,		3,					'kwan_no',		'어음번호',		'Y',			'80',			'1');	
 END IF
 
 sDcGbn   = dw_1.GetItemString(dw_1.getrow(),"dc_gu")
-sGbn1 = dw_1.GetItemString(dw_1.getrow(),"gbn1")				/*계정성격구분 = '퇴직급여',충당부채 = 'Y'*/
+sGbn1 = dw_1.GetItemString(dw_1.getrow(),"gbn1")	/*계정성격구분 = '퇴직급여',충당부채 = 'Y'*/
 sChGbn = dw_1.GetItemString(dw_1.getrow(),"ch_gu")
 IF sGbn1 = '6' AND sChGbn = 'Y' THEN
 	delete from kfz01ot0 where acc1_cd = :sAcc1_Cd and acc2_cd = :sAcc2_Cd and dc_gu = '1' and kwan_colid = 'exp_gu';	
@@ -391,8 +377,8 @@ IF sGbn1 = '6' AND sChGbn = 'Y' THEN
 		sDcGbn = '1'
 	end if
 	
-	insert into kfz01ot0									/*반대변에 추가*/
-		(acc1_cd,			acc2_cd,			dc_gu,		seq_no,			kwan_colid,		kwan_colnm,		reqchk,		ref_gbn,		kwan_type)
+	insert into kfz01ot0	/*반대변에 추가*/
+		(acc1_cd,			acc2_cd,		dc_gu,		seq_no,			kwan_colid,		kwan_colnm,		reqchk,		ref_gbn,		kwan_type)
 	values
 		(:sAcc1_Cd,			:sAcc2_Cd,		:sDcGbn,		10,				'exp_gu',		'처리구분',		'Y',			null,			'1');
 END IF
@@ -401,8 +387,8 @@ sDriveGbn = dw_1.GetItemString(dw_1.getrow(),"drivegbn")
 IF sDriveGbn = 'Y' THEN
 	delete from kfz01ot0 where acc1_cd = :sAcc1_Cd and acc2_cd = :sAcc2_Cd and dc_gu =:sDcGbn and kwan_colid = 'kwan_no';	
 
-	insert into kfz01ot0									
-		(acc1_cd,			acc2_cd,			dc_gu,		seq_no,			kwan_colid,		kwan_colnm,		reqchk,		ref_gbn,		kwan_type)
+	insert into kfz01ot0	
+		(acc1_cd,			acc2_cd,		dc_gu,		seq_no,			kwan_colid,		kwan_colnm,		reqchk,		ref_gbn,		kwan_type)
 	values
 		(:sAcc1_Cd,			:sAcc2_Cd,		:sDcGbn,		10,				'kwan_no',		'관리번호',			'Y',			'98',			'1');
 END IF
@@ -425,7 +411,7 @@ Idw_Accode.DataObject = 'dw_kcda01_3'
 Idw_Accode.SetTransObject(Sqlca)
 Idw_Accode.Reset()
 
-IF Idw_Ary.Retrieve() > 0 THEN								/*관리자료 삭제처리*/
+IF Idw_Ary.Retrieve() > 0 THEN	/*관리자료 삭제처리*/
 	iRowCount = Idw_Ary.RowCount()
 	FOR i = iRowCount TO 1 Step -1
 		Idw_Ary.DeleteRow(i)
@@ -521,7 +507,7 @@ p_ins.Enabled =True
 p_ins.PictureName = "C:\erpman\image\추가_up.gif"
 p_mod.Enabled =True
 p_mod.PictureName = "C:\erpman\image\수정_up.gif"
-IF mode ="M" THEN							//수정
+IF mode ="M" THEN			//수정
 	dw_1.SetTabOrder("acc1_cd",0)
 	dw_1.SetTabOrder("acc2_cd",0)
 	
@@ -533,7 +519,7 @@ IF mode ="M" THEN							//수정
 	cbx_2.Enabled  = True
 	
 	dw_1.SetColumn("acc1_nm")
-ELSEIF mode ="I" THEN					//입력
+ELSEIF mode ="I" THEN		//입력
 	dw_1.SetTabOrder("acc1_cd",10)
 	dw_1.SetTabOrder("acc2_cd",20)
 	
@@ -707,6 +693,9 @@ type p_search from w_inherite`p_search within w_kcda01
 end type
 
 type p_ins from w_inherite`p_ins within w_kcda01
+end type
+
+type p_new from w_inherite`p_new within w_kcda01
 end type
 
 type p_exit from w_inherite`p_exit within w_kcda01
@@ -899,7 +888,7 @@ IF this.GetColumnName() ="ye_gu" THEN
 	IF sYeGbn = "" OR IsNull(sYeGbn) THEN RETURN
 	
 	IF IsNull(F_Get_Refferance('AB',sYeGbn)) THEN
-		F_Messagechk(20,"예적금구분")
+		F_MessageChk(20,"예적금구분")
 		dw_1.SetItem(row,"ye_gu",sNullValue)
 		Return 1
 	END IF
@@ -1058,7 +1047,7 @@ If currentrow > 0 then
 
 			sModStatus="M"
 
-        WF_SETTING_RETRIEVEMODE(sModStatus)								//수정 mode 
+        WF_SETTING_RETRIEVEMODE(sModStatus)				//수정 mode 
 
 			p_ins.Enabled =False
 			p_ins.PictureName = "C:\erpman\image\추가_d.gif"
