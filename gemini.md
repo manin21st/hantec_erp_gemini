@@ -34,7 +34,8 @@
 
 ### 3.1. [Level 0] 파일 형식 (Physical Layer)
 - **P-01: 인코딩 & 줄바꿈 (CRITICAL)**
-    - 모든 `.srw` 파일은 **UTF-16 LE** 인코딩과 **CRLF** (`\r\n`) 줄바꿈으로 저장해야 합니다. (IDE Crash 방지)
+    - 모든 `.srw` 파일은 **UTF-16 LE** 인코딩과 **CRLF** (`
+`) 줄바꿈으로 저장해야 합니다. (IDE Crash 방지)
 
 ### 3.2. [Level 1] 윈도우 선언부 (Structural Layer)
 - **P-02: 상속 컨트롤 재정의 (CRITICAL)**
@@ -90,3 +91,8 @@
 - **컴파일 오류 (`Unknown function name`)**
     - **원인**: 사용자 정의 이벤트의 프로토타입 미선언.
     - **해결**: **P-03** 패턴 적용.
+---
+
+## 5. 작업 관리 (Management)
+- **M-01: 버전 관리 (CRITICAL)**
+    - 모든 작업 완료 후, 변경 사항은 반드시 GitHub 저장소에 업로드(Push)하여 최신 상태를 유지한다.
