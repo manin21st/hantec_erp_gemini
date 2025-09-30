@@ -1,16 +1,14 @@
-
 summary: |
   - `source`/_sample과 `target`/_sample 파일 비교를 통한 마이그레이션 패턴 분석
   - 분석된 패턴을 `gemini.md` 핸드북에 정리
   - 여러 차례의 소스 임포트 테스트 중 발견된 오류(IDE Crash, Unknown function name 등)와 해결 방법을 `gemini.md`에 기록
-  - `w_kcda01.srw` 파일 마이그레이션 완료
-  - 마이그레이션된 `w_kcda01.srw` 파일 임포트 테스트 시도 → **IDE 비정상 종료 발생**
+  - `w_kcda01.srw` 파일 마이그레이션 시도 → **IDE 비정상 종료 발생**
 detailed_log:
 - timestamp: '2025-09-30 09:00:00'
-  status: "완료"
+  status: "오류"
   target: "w_kcda01.srw"
-  description: "IDE Crash 원인 분석 및 해결 (누락된 p_new 컨트롤 선언 추가)"
-  checklist_result: "N/A"
+  description: "IDE Crash 문제 해결 시도 중 구문 오류가 발생하여 완료되지 못함."
+  checklist_result: null
   worker: "Gemini"
 - timestamp: '2025-09-30 09:05:00'
   status: "완료"
@@ -19,8 +17,14 @@ detailed_log:
   checklist_result: "N/A"
   worker: "Gemini"
 - timestamp: '2025-09-30 09:10:00'
+  status: "완료"
+  target: "progress.md"
+  description: "진행 기록 관리 방식을 Markdown에서 YAML 형식으로 변경"
+  checklist_result: "N/A"
+  worker: "Gemini"
+- timestamp: '2025-09-30 09:15:00'
   status: "예정"
-  target: "C:\erpman\hantec_erp_gemini\source\ACPL01\w_cic00010.srw"
-  description: "마이그레이션 작업 시작"
+  target: "w_kcda01.srw"
+  description: "구문 오류 해결 및 마이그레이션 재시도"
   checklist_result: null
   worker: "Gemini"
