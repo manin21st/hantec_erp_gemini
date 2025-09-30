@@ -1,0 +1,191 @@
+$PBExportHeader$w_cia00210.srw
+$PBExportComments$제조원가명세서와 제품수불부 비교
+forward
+global type w_cia00210 from w_standard_print
+end type
+type rr_1 from roundrectangle within w_cia00210
+end type
+end forward
+
+global type w_cia00210 from w_standard_print
+string title = "제조원가명세서와 수불부 비교"
+rr_1 rr_1
+end type
+global w_cia00210 w_cia00210
+
+forward prototypes
+public function integer wf_retrieve ()
+end prototypes
+
+public function integer wf_retrieve ();String sFromym
+
+
+dw_ip.AcceptText()
+sFromym  = Trim(dw_ip.GetITemString(1,"sfromym"))
+
+IF sFromym = '' or isnull(sFromym) THEN
+   f_messagechk(1,'[원가계산년월]')
+	dw_ip.SetColumn("sfromym")
+	dw_ip.SetFocus()
+	Return -1	
+ELSE
+	IF F_DATECHK(sFromym + '01') = -1 THEN
+		f_messagechk(21,'[원가계산년월]')
+	   dw_ip.SetColumn("sfromym")
+	   dw_ip.SetFocus()
+	   Return -1	 
+  END IF	
+END IF
+
+IF dw_print.Retrieve(sFromym)  <= 0 THEN
+   f_messagechk(14,"") 
+	Return -1 	
+END IF	
+dw_print.ShareData(dw_list)
+
+dw_list.SetFilter("")
+dw_list.Filter()
+
+Return 1
+end function
+
+on w_cia00210.create
+int iCurrent
+call super::create
+this.rr_1=create rr_1
+iCurrent=UpperBound(this.Control)
+this.Control[iCurrent+1]=this.rr_1
+end on
+
+on w_cia00210.destroy
+call super::destroy
+if IsValid(MenuID) then destroy(MenuID)
+destroy(this.rr_1)
+end on
+
+event open;call super::open;dw_ip.SetITem(1,"sfromym",Left(f_today(),6))
+dw_ip.SetItem(1,"stoym",left(f_today(),6))
+
+dw_ip.SetColumn("sfromym")
+dw_ip.SetFocus()
+end event
+
+type p_preview from w_standard_print`p_preview within w_cia00210
+boolean visible = false
+integer x = 2789
+integer y = 0
+end type
+
+type p_exit from w_standard_print`p_exit within w_cia00210
+integer y = 0
+end type
+
+type p_print from w_standard_print`p_print within w_cia00210
+boolean visible = false
+integer x = 2962
+integer y = 0
+end type
+
+type p_retrieve from w_standard_print`p_retrieve within w_cia00210
+integer x = 4270
+integer y = 0
+end type
+
+
+
+
+
+
+
+type st_10 from w_standard_print`st_10 within w_cia00210
+end type
+
+
+
+type dw_print from w_standard_print`dw_print within w_cia00210
+integer x = 3689
+integer y = 24
+string dataobject = "dw_cia002102"
+end type
+
+type dw_ip from w_standard_print`dw_ip within w_cia00210
+integer x = 32
+integer y = 0
+integer width = 2642
+integer height = 188
+string dataobject = "dw_cia002101"
+end type
+
+event dw_ip::rbuttondown;SetNull(lstr_account.acc1_cd)
+SetNull(lstr_account.acc2_cd)
+
+this.AcceptText()
+
+IF this.GetColumnName() = "acc1" OR this.GetColumnName() = "acc2" THEN
+	lstr_account.acc1_cd = this.object.acc1[1]
+	
+	Open(W_KFZ01OM0_POPUP)
+
+	IF IsNull(lstr_account.acc1_cd) OR lstr_account.acc1_cd = "" THEN Return
+	
+	THIS.SetItem(THIS.GetRow(), "acc1", lstr_account.acc1_cd)
+	THIS.SetItem(THIS.GetRow(), "acc2", lstr_account.acc2_cd)
+	THIS.SetItem(THIS.GetRow(), "acc_name1", lstr_account.acc2_nm)
+	
+END IF
+end event
+
+event dw_ip::itemerror;Return 1
+end event
+
+event dw_ip::itemchanged;String sGbun,snull
+
+SetNUll(snull)
+
+IF this.GetColumnName() = "sgubn" THEN
+	sGbun    = this.GetText()
+	
+	if sGbun  = '1' then 			/*수량*/
+		dw_list.SetFilter("iq23 <> iq22")
+	elseif sGbun = '2' then		/*재료비*/
+		dw_list.SetFilter("im23 <> im22")
+	elseif sGbun = '3' then		/*노무비*/
+		dw_list.SetFilter("il23 <> il22")
+	elseif sGbun = '4' then		/*경비*/
+		dw_list.SetFilter("io23 <> io22")
+	else
+		dw_list.SetFilter("")
+	end if
+	dw_list.Filter()
+
+END IF
+
+
+end event
+
+event dw_ip::ue_key;call super::ue_key;IF keydown(keytab!) THEN
+	TriggerEvent(RbuttonDown!)
+END IF
+end event
+
+type dw_list from w_standard_print`dw_list within w_cia00210
+integer x = 41
+integer y = 196
+integer width = 4539
+integer height = 2028
+string dataobject = "dw_cia002102"
+boolean border = false
+end type
+
+type rr_1 from roundrectangle within w_cia00210
+long linecolor = 28144969
+integer linethickness = 1
+long fillcolor = 32106727
+integer x = 37
+integer y = 188
+integer width = 4576
+integer height = 2056
+integer cornerheight = 40
+integer cornerwidth = 55
+end type
+
