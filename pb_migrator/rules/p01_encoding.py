@@ -1,9 +1,7 @@
 def apply(code, **kwargs):
     """
-    Applies P-01 rule: Converts file encoding to UTF-16 LE and line endings to CRLF.
-    This rule is typically applied at the final save stage, not during preview.
+    Applies P-01 rule: Ensures file encoding is UTF-16 LE and line endings are CRLF.
+    This rule's primary application is handled during the file save operation in gui.py.
     """
-    # This function is more of a placeholder for the engine.
-    # The actual encoding conversion will happen in gui.py's save_file method.
-    report = {"rule": "P-01", "status": "Skipped (Applied on Save)", "details": "Encoding and line endings will be converted to UTF-16 LE with CRLF upon saving the file."}
+    report = {"rule": "P-01", "status": "Handled by Save", "details": "Encoding and line endings are converted to UTF-16 LE with CRLF upon saving the file via the GUI."}
     return code, report
