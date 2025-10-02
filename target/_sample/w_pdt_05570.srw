@@ -1,0 +1,300 @@
+$PBExportHeader$w_pdt_05570.srw
+$PBExportComments$** 외주처 현재고 현황
+forward
+global type w_pdt_05570 from w_standard_print
+end type
+end forward
+
+global type w_pdt_05570 from w_standard_print
+string title = "외주처 현재고 현황"
+end type
+global w_pdt_05570 w_pdt_05570
+
+forward prototypes
+public function integer wf_retrieve ()
+end prototypes
+
+public function integer wf_retrieve ();string cvcod1, cvcod2, fitnbr, titnbr, sgub, ls_gubun, ls_ittyp
+Integer li_msg
+
+if dw_ip.AcceptText() = -1 then
+	dw_ip.SetFocus()
+	return -1
+end if	
+
+cvcod1 = trim(dw_ip.object.cvcod1[1])
+cvcod2 = trim(dw_ip.object.cvcod2[1])
+fitnbr = trim(dw_ip.object.fr_itnbr[1])
+titnbr = trim(dw_ip.object.to_itnbr[1])
+sgub   = trim(dw_ip.object.sgub[1])
+ls_gubun   = trim(dw_ip.object.gubun[1])
+ls_ittyp   = trim(dw_ip.object.ittyp[1])	// 품목구분 추가 by shjeon 20120920
+
+//if (IsNull(cvcod1) or cvcod1 = "")  then
+//	messagebox('거래처 확인', '거래처를 입력하십시오.')
+//	Return -1
+//End If
+//
+//if (IsNull(cvcod2) or cvcod2 = "")  then
+//	messagebox('거래처 확인', '거래처를 입력 하십시오.')
+//	Return -1
+//End If
+
+//if (IsNull(fitnbr) or fitnbr = "")  then fitnbr = "."
+//if (IsNull(titnbr) or titnbr = "")  then titnbr = "zzzzzzzzzzzzzzz"
+
+//if (IsNull(cvcod1) or cvcod1 = "")  then cvcod1 = "%"
+/* 속도 문제로 거래처 필수 */
+If (IsNull(cvcod1) or Trim(cvcod1) = '') Then
+	MessageBox('거래처 확인', '거래처를 선택 후 조회하십시오.')
+	Return -1
+End If
+if (IsNull(fitnbr) or fitnbr = "")  then fitnbr = "%"
+
+if cvcod1 = "%" and fitnbr = "%" then
+	li_msg = Messagebox('경고','조회 자료가 너무 많아 거래처나 품번을 입력하여 조회를 권장 합니다.~n계속 진행 하시겠습니까?',StopSign!,YesNo!,2)
+	if li_msg = 2 then
+		return -1
+	end if
+end if
+
+if (IsNull(ls_ittyp) or ls_ittyp = "")  then ls_ittyp = "%"
+
+dw_list.setredraw(false)
+if sgub = '1' then //거래처순
+   dw_list.DataObject = 'd_pdt_05570_02'
+	dw_print.DataObject = 'd_pdt_05570_02_p'
+else
+   dw_list.DataObject = 'd_pdt_05570_03'
+	dw_print.DataObject = 'd_pdt_05570_03_p'
+end if
+
+dw_list.SetTransObject(SQLCA)
+dw_print.SetTransObject(SQLCA)
+
+//if dw_print.Retrieve(cvcod1, cvcod2, fitnbr, titnbr,ls_gubun) <= 0 then
+//	f_message_chk(50,'[외주처 현재고 현황]')
+//	dw_ip.Setfocus()
+//	return -1
+//Else
+//	dw_list.Retrieve(cvcod1, cvcod2, fitnbr, titnbr,ls_gubun)
+//end if
+If dw_print.Retrieve(cvcod1, fitnbr, ls_gubun, ls_ittyp) <= 0 Then
+	f_message_chk(50, '[외주처 현재고 현황]')
+	dw_ip.SetFocus()
+	Return -1
+Else
+	dw_list.Retrieve(cvcod1, fitnbr, ls_gubun, ls_ittyp)
+End If
+
+dw_print.ShareData(dw_list)
+
+dw_list.setredraw(true)
+
+return 1
+end function
+
+on w_pdt_05570.create
+call super::create
+end on
+
+on w_pdt_05570.destroy
+call super::destroy
+end on
+
+event open;call super::open;
+
+dw_ip.SetTransObject(SQLCA)
+dw_ip.Reset()
+dw_ip.InsertRow(0)
+
+dw_list.settransobject(sqlca)
+dw_print.settransobject(sqlca)
+
+IF is_upmu = 'A' THEN //회계인 경우
+   int iRtnVal 
+
+	IF Upper(Mid(is_window_id,4,2)) = 'BG' THEN							   /*예산*/
+		IF F_Valid_EmpNo(Gs_EmpNo) = 'N' THEN							/*권한 체크- 현업 여부*/
+			dw_ip.SetItem(dw_ip.GetRow(),"saupj",   Gs_Saupj)
+			
+			dw_ip.Modify("saupj.protect = 1")
+		ELSE
+			dw_ip.Modify("saupj.protect = 0")
+		END IF
+	ELSE
+		IF Upper(Mid(is_window_id,4,2)) = 'FI' THEN							/*자금*/
+			iRtnVal = F_Authority_Fund_Chk(Gs_Dept)	
+		ELSE
+			iRtnVal = F_Authority_Chk(Gs_Dept)
+		END IF
+		IF iRtnVal = -1 THEN							/*권한 체크- 현업 여부*/
+			dw_ip.SetItem(dw_ip.GetRow(),"saupj",   Gs_Saupj)
+			
+			dw_ip.Modify("saupj.protect = 1")
+		ELSE
+			dw_ip.Modify("saupj.protect = 0")
+		END IF	
+	END IF
+END IF
+dw_print.object.datawindow.print.preview = "yes"
+end event
+
+type dw_list from w_standard_print`dw_list within w_pdt_05570
+integer height = 1964
+string dataobject = "d_pdt_05570_02"
+end type
+
+type cb_print from w_standard_print`cb_print within w_pdt_05570
+end type
+
+type cb_excel from w_standard_print`cb_excel within w_pdt_05570
+end type
+
+type cb_preview from w_standard_print`cb_preview within w_pdt_05570
+end type
+
+type cb_1 from w_standard_print`cb_1 within w_pdt_05570
+end type
+
+type dw_print from w_standard_print`dw_print within w_pdt_05570
+integer x = 4123
+integer y = 184
+string dataobject = "d_pdt_05570_02_p"
+end type
+
+type dw_ip from w_standard_print`dw_ip within w_pdt_05570
+integer y = 56
+integer height = 188
+string dataobject = "d_pdt_05570_01"
+end type
+
+event dw_ip::itemchanged;string s_cod, s_nam1, s_nam2
+integer i_rtn
+string  sitnbr, sitdsc, sispec, s_gub, snull
+int     ireturn
+
+s_cod = Trim(this.GetText()) 
+
+if this.GetColumnName() = "cvcod1" then
+	i_rtn = f_get_name2("V0", "N", s_cod, s_nam1, s_nam2)
+	this.SetItem(1,"cvcod1",s_cod)
+	this.SetItem(1,"cvnam1",s_nam1)
+	this.SetItem(1,"cvcod2",s_cod)
+	this.SetItem(1,"cvnam2",s_nam1)
+	return i_rtn 
+elseif this.GetColumnName() = "cvcod2" then
+	i_rtn = f_get_name2("V0", "N", s_cod, s_nam1, s_nam2)
+	this.SetItem(1,"cvcod2",s_cod)
+	this.SetItem(1,"cvnam2",s_nam1)
+	return i_rtn 
+ELSEIF this.GetColumnName() = "fr_itnbr"	THEN
+	sItnbr = trim(this.GetText())
+	ireturn = f_get_name2('품번', 'N', sitnbr, sitdsc, sispec)    //1이면 실패, 0이 성공	
+	this.setitem(1, "fr_itnbr", sitnbr)	
+	this.setitem(1, "fr_itdsc", sitdsc)	
+	this.setitem(1, "fr_ispec", sispec)
+	this.setitem(1, "to_itnbr", sitnbr)	
+	this.setitem(1, "to_itdsc", sitdsc)	
+	this.setitem(1, "to_ispec", sispec)	
+	RETURN ireturn
+ELSEIF this.GetColumnName() = "fr_itdsc"	THEN
+	sItdsc = trim(this.GetText())
+	ireturn = f_get_name2('품명', 'N', sitnbr, sitdsc, sispec)    //1이면 실패, 0이 성공	
+	this.setitem(1, "fr_itnbr", sitnbr)	
+	this.setitem(1, "fr_itdsc", sitdsc)	
+	this.setitem(1, "fr_ispec", sispec)
+	this.setitem(1, "to_itnbr", sitnbr)	
+	this.setitem(1, "to_itdsc", sitdsc)	
+	this.setitem(1, "to_ispec", sispec)	
+	RETURN ireturn
+ELSEIF this.GetColumnName() = "fr_ispec"	THEN
+	sIspec = trim(this.GetText())
+	ireturn = f_get_name2('규격', 'N', sitnbr, sitdsc, sispec)    //1이면 실패, 0이 성공	
+	this.setitem(1, "fr_itnbr", sitnbr)	
+	this.setitem(1, "fr_itdsc", sitdsc)	
+	this.setitem(1, "fr_ispec", sispec)
+	this.setitem(1, "to_itnbr", sitnbr)	
+	this.setitem(1, "to_itdsc", sitdsc)	
+	this.setitem(1, "to_ispec", sispec)	
+	RETURN ireturn
+ELSEIF this.GetColumnName() = "to_itnbr"	THEN
+	sItnbr = trim(this.GetText())
+	ireturn = f_get_name2('품번', 'N', sitnbr, sitdsc, sispec)    //1이면 실패, 0이 성공	
+	this.setitem(1, "to_itnbr", sitnbr)	
+	this.setitem(1, "to_itdsc", sitdsc)	
+	this.setitem(1, "to_ispec", sispec)
+	RETURN ireturn
+ELSEIF this.GetColumnName() = "to_itdsc"	THEN
+	sItdsc = trim(this.GetText())
+	ireturn = f_get_name2('품명', 'N', sitnbr, sitdsc, sispec)    //1이면 실패, 0이 성공	
+	this.setitem(1, "to_itnbr", sitnbr)	
+	this.setitem(1, "to_itdsc", sitdsc)	
+	this.setitem(1, "to_ispec", sispec)
+	RETURN ireturn
+ELSEIF this.GetColumnName() = "to_ispec"	THEN
+	sIspec = trim(this.GetText())
+	ireturn = f_get_name2('규격', 'N', sitnbr, sitdsc, sispec)    //1이면 실패, 0이 성공	
+	this.setitem(1, "to_itnbr", sitnbr)	
+	this.setitem(1, "to_itdsc", sitdsc)	
+	this.setitem(1, "to_ispec", sispec)
+	RETURN ireturn
+end if
+
+
+end event
+
+event dw_ip::itemerror;return 1
+end event
+
+event dw_ip::rbuttondown;SetNull(gs_Gubun)
+SetNull(gs_code)
+SetNull(gs_codename)
+
+IF	this.getcolumnname() = "cvcod1"	THEN		
+	gs_gubun ='1'
+	open(w_vndmst_popup)
+   if gs_code = '' or isnull(gs_code) then return 	
+	this.SetItem(1, "cvcod1", gs_code)
+	this.SetItem(1, "cvnam1", gs_codename)
+ELSEIF this.getcolumnname() = "cvcod2"	THEN		
+	gs_gubun ='1'
+	open(w_vndmst_popup)
+   if gs_code = '' or isnull(gs_code) then return 	
+	this.SetItem(1, "cvcod2", gs_code)
+	this.SetItem(1, "cvnam2", gs_codename)
+ELSEif this.GetColumnName() = 'fr_itnbr' then
+	open(w_itemas_popup)
+	
+	if isnull(gs_code) or gs_code = "" then return
+	
+	this.SetItem(1,"fr_itnbr",gs_code)
+	this.TriggerEvent(ItemChanged!)
+elseif this.GetColumnName() = 'to_itnbr' then
+	open(w_itemas_popup)
+	
+	if isnull(gs_code) or gs_code = "" then return
+	
+	this.SetItem(1,"to_itnbr",gs_code)
+	this.TriggerEvent(ItemChanged!)
+END IF
+end event
+
+type r_1 from w_standard_print`r_1 within w_pdt_05570
+end type
+
+type r_2 from w_standard_print`r_2 within w_pdt_05570
+end type
+
+type rr_1 from roundrectangle within w_pdt_05570
+long linecolor = 28144969
+integer linethickness = 1
+long fillcolor = 32106727
+integer x = 37
+integer y = 308
+integer width = 4526
+integer height = 2020
+integer cornerheight = 40
+integer cornerwidth = 55
+end type
+
