@@ -2,88 +2,183 @@ import tkinter as tk
 from tkinter import ttk, messagebox
 import os
 import re
+import difflib
+from engine import MigrationEngine
+import reporting
 
 class MainApplication(tk.Frame):
     def __init__(self, parent, *args, **kwargs):
         tk.Frame.__init__(self, parent, *args, **kwargs)
         self.parent = parent
-        self.parent.title("PBMigrator")
-        self.parent.geometry("1400x900")
-        
+        self.parent.title("PBMigrator v2.0")
+        try:
+            self.parent.state('zoomed')
+        except tk.TclError:
+            self.parent.geometry("1600x900")
+
         self.project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
         self.worklist_path = os.path.join(self.project_root, "worklist.md")
 
-        self.create_widgets()
+        self.engine = MigrationEngine()
+        self.last_reports = []
+
+        self.create_menu()
+        self.create_statusbar() # Create and pack statusbar first
+        self.create_widgets()   # Then create and pack the main content
+        
+        self.setup_diff_highlighting()
         self.load_worklist()
 
+    def create_menu(self):
+        menubar = tk.Menu(self.parent)
+        self.parent.config(menu=menubar)
+        file_menu = tk.Menu(menubar, tearoff=0)
+        file_menu.add_command(label="Reload Worklist", command=self.load_worklist)
+        file_menu.add_separator()
+        file_menu.add_command(label="Exit", command=self.parent.quit)
+        menubar.add_cascade(label="File", menu=file_menu)
+
+    def create_statusbar(self):
+        self.status_var = tk.StringVar()
+        self.status_var.set("Ready")
+        statusbar = ttk.Label(self, textvariable=self.status_var, anchor=tk.W, relief=tk.SUNKEN)
+        statusbar.pack(side=tk.BOTTOM, fill=tk.X)
+
     def create_widgets(self):
-        main_paned_window = ttk.PanedWindow(self.parent, orient=tk.HORIZONTAL)
-        main_paned_window.pack(fill=tk.BOTH, expand=True)
+        self.notebook = ttk.Notebook(self) # Reparented to self
+        self.notebook.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
 
-        # --- Left Panel ---
-        left_frame = ttk.Labelframe(main_paned_window, text="File List", width=400)
-        main_paned_window.add(left_frame, weight=1)
+        self.settings_tab = ttk.Frame(self.notebook)
+        self.compare_tab = ttk.Frame(self.notebook)
+        self.notebook.add(self.settings_tab, text='설정 및 실행')
+        self.notebook.add(self.compare_tab, text='소스 비교')
 
-        self.file_listbox = tk.Listbox(left_frame)
-        self.file_listbox.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
+        # --- "설정 및 실행" Tab ---
+        settings_main_pane = ttk.PanedWindow(self.settings_tab, orient=tk.HORIZONTAL)
+        settings_main_pane.pack(fill=tk.BOTH, expand=True)
+
+        # File List (Left)
+        file_list_frame = ttk.Labelframe(settings_main_pane, text="File List", width=350)
+        settings_main_pane.add(file_list_frame, weight=1)
+        self.file_listbox, _, _ = self.create_scrolled_listbox(file_list_frame)
         self.file_listbox.bind('<<ListboxSelect>>', self.on_file_select)
 
-        load_button = ttk.Button(left_frame, text="Reload Worklist", command=self.load_worklist)
-        load_button.pack(fill=tk.X, padx=5, pady=5)
+        # Controls and Log (Right)
+        controls_log_pane = ttk.PanedWindow(settings_main_pane, orient=tk.VERTICAL)
+        settings_main_pane.add(controls_log_pane, weight=3)
 
-        right_paned_window = ttk.PanedWindow(main_paned_window, orient=tk.VERTICAL)
-        main_paned_window.add(right_paned_window, weight=4)
+        control_frame = ttk.Labelframe(controls_log_pane, text="Controls")
+        controls_log_pane.add(control_frame, weight=1)
+        
+        log_frame = ttk.Labelframe(controls_log_pane, text="Log")
+        controls_log_pane.add(log_frame, weight=2)
 
-        # --- Center Panel ---
-        diff_frame = ttk.Labelframe(right_paned_window, text="Diff View")
-        right_paned_window.add(diff_frame, weight=3)
+        self.log_text, _, _ = self.create_scrolled_text(log_frame, wrap=tk.WORD)
 
-        diff_paned_window = ttk.PanedWindow(diff_frame, orient=tk.HORIZONTAL)
-        diff_paned_window.pack(fill=tk.BOTH, expand=True)
-
-        original_frame = ttk.Frame(diff_paned_window)
-        diff_paned_window.add(original_frame, weight=1)
-        ttk.Label(original_frame, text="Original").pack(anchor=tk.W, padx=5)
-        self.original_text = tk.Text(original_frame, wrap=tk.NONE, height=1, width=1)
-        self.original_text.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
-
-        migrated_frame = ttk.Frame(diff_paned_window)
-        diff_paned_window.add(migrated_frame, weight=1)
-        ttk.Label(migrated_frame, text="Migrated (Preview)").pack(anchor=tk.W, padx=5)
-        self.migrated_text = tk.Text(migrated_frame, wrap=tk.NONE, height=1, width=1)
-        self.migrated_text.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
-
-        # --- Right Panel ---
-        control_log_frame = ttk.PanedWindow(right_paned_window, orient=tk.VERTICAL)
-        right_paned_window.add(control_log_frame, weight=1)
-
-        control_frame = ttk.Labelframe(control_log_frame, text="Controls")
-        control_log_frame.add(control_frame, weight=1)
-
+        # --- Populate Controls Frame ---
         rules_frame = ttk.Frame(control_frame)
-        rules_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=10, pady=5)
+        rules_frame.pack(side=tk.LEFT, fill=tk.Y, padx=10, pady=5, anchor='nw')
         
         self.rules_vars = {}
-        # P-06 is now handled by correct encoding, so we only need P-01 to P-05
-        for i in range(1, 6):
-            rule_id = f"P-0{i}"
+        rule_descriptions = {
+            "P-01": "Encoding & Line Endings", "P-02": "Inherited Controls",
+            "P-03": "User Event Prototypes", "P-04": "Standard Events",
+            "P-05": "Remove Decorative Controls", "P-07": "UI/UX Modernization",
+            "P-08": "Standard MDI Events"
+        }
+        rule_ids = sorted(rule_descriptions.keys())
+        for rule_id in rule_ids:
             var = tk.BooleanVar(value=True)
             self.rules_vars[rule_id] = var
-            chk = ttk.Checkbutton(rules_frame, text=rule_id, variable=var)
+            chk_text = f"{rule_id}: {rule_descriptions.get(rule_id, '')}"
+            chk = ttk.Checkbutton(rules_frame, text=chk_text, variable=var)
             chk.pack(anchor=tk.W)
 
         buttons_frame = ttk.Frame(control_frame)
-        buttons_frame.pack(side=tk.RIGHT, fill=tk.Y, padx=10, pady=5)
-
+        buttons_frame.pack(side=tk.RIGHT, fill=tk.Y, padx=10, pady=5, anchor='ne')
         preview_button = ttk.Button(buttons_frame, text="Preview Changes", command=self.preview_changes)
         preview_button.pack(fill=tk.X, pady=5, ipady=5)
         save_button = ttk.Button(buttons_frame, text="Save to Target", command=self.save_file)
         save_button.pack(fill=tk.X, pady=5, ipady=5)
 
-        log_frame = ttk.Labelframe(control_log_frame, text="Log")
-        control_log_frame.add(log_frame, weight=1)
-        self.log_text = tk.Text(log_frame, height=5, wrap=tk.WORD)
-        self.log_text.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
+        # --- "소스 비교" Tab ---
+        diff_paned_window = ttk.PanedWindow(self.compare_tab, orient=tk.HORIZONTAL)
+        diff_paned_window.pack(fill=tk.BOTH, expand=True)
+
+        original_frame = ttk.Labelframe(diff_paned_window, text="Original")
+        diff_paned_window.add(original_frame, weight=1)
+        self.original_text, v_scroll_orig, _ = self.create_scrolled_text(original_frame)
+        
+        migrated_frame = ttk.Labelframe(diff_paned_window, text="Migrated (Preview)")
+        diff_paned_window.add(migrated_frame, weight=1)
+        self.migrated_text, v_scroll_mig, _ = self.create_scrolled_text(migrated_frame)
+
+        # Synchronized Scrolling
+        self.original_text.config(yscrollcommand=self.sync_scroll(v_scroll_orig, self.migrated_text))
+        self.migrated_text.config(yscrollcommand=self.sync_scroll(v_scroll_mig, self.original_text))
+        v_scroll_orig.config(command=self.sync_scroll_command(self.original_text, self.migrated_text))
+        v_scroll_mig.config(command=self.sync_scroll_command(self.migrated_text, self.original_text))
+
+    def create_scrolled_text(self, parent, wrap=tk.NONE):
+        text_frame = ttk.Frame(parent)
+        text_frame.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
+        text_widget = tk.Text(text_frame, wrap=wrap, height=1, width=1)
+        v_scroll = ttk.Scrollbar(text_frame, orient=tk.VERTICAL, command=text_widget.yview)
+        h_scroll = ttk.Scrollbar(text_frame, orient=tk.HORIZONTAL, command=text_widget.xview)
+        text_widget.configure(yscrollcommand=v_scroll.set, xscrollcommand=h_scroll.set)
+        v_scroll.pack(side=tk.RIGHT, fill=tk.Y)
+        h_scroll.pack(side=tk.BOTTOM, fill=tk.X)
+        text_widget.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        return text_widget, v_scroll, h_scroll
+
+    def create_scrolled_listbox(self, parent):
+        list_frame = ttk.Frame(parent)
+        list_frame.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
+        listbox = tk.Listbox(list_frame, exportselection=False)
+        v_scroll = ttk.Scrollbar(list_frame, orient=tk.VERTICAL, command=listbox.yview)
+        h_scroll = ttk.Scrollbar(list_frame, orient=tk.HORIZONTAL, command=listbox.xview)
+        listbox.configure(yscrollcommand=v_scroll.set, xscrollcommand=h_scroll.set)
+        v_scroll.pack(side=tk.RIGHT, fill=tk.Y)
+        h_scroll.pack(side=tk.BOTTOM, fill=tk.X)
+        listbox.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        return listbox, v_scroll, h_scroll
+
+    def sync_scroll(self, scrollbar, other_widget):
+        def _sync(first, last):
+            scrollbar.set(first, last)
+            other_widget.yview_moveto(first)
+        return _sync
+
+    def sync_scroll_command(self, *widgets):
+        def _sync(*args):
+            for widget in widgets:
+                widget.yview(*args)
+        return _sync
+
+    def setup_diff_highlighting(self):
+        self.original_text.tag_configure("delete", background="#ffdddd")
+        self.migrated_text.tag_configure("insert", background="#ddffdd")
+        self.original_text.tag_configure("replace", background="#ffffdd")
+        self.migrated_text.tag_configure("replace", background="#ffffdd")
+
+    def highlight_diff(self, original_code, migrated_code):
+        self.original_text.delete('1.0', tk.END)
+        self.migrated_text.delete('1.0', tk.END)
+        self.original_text.insert('1.0', original_code)
+        self.migrated_text.insert('1.0', migrated_code)
+
+        original_lines = original_code.splitlines(True)
+        migrated_lines = migrated_code.splitlines(True)
+
+        d = difflib.SequenceMatcher(None, original_lines, migrated_lines)
+        for tag, i1, i2, j1, j2 in d.get_opcodes():
+            if tag == 'replace':
+                self.original_text.tag_add("replace", f"{i1 + 1}.0", f"{i2}.0 + {len(original_lines[i2-1])} chars")
+                self.migrated_text.tag_add("replace", f"{j1 + 1}.0", f"{j2}.0 + {len(migrated_lines[j2-1])} chars")
+            elif tag == 'delete':
+                self.original_text.tag_add("delete", f"{i1 + 1}.0", f"{i2}.0 + {len(original_lines[i2-1])} chars")
+            elif tag == 'insert':
+                self.migrated_text.tag_add("insert", f"{j1 + 1}.0", f"{j2}.0 + {len(migrated_lines[j2-1])} chars")
 
     def load_worklist(self):
         self.log(f"Loading worklist from: {self.worklist_path}")
@@ -117,11 +212,12 @@ class MainApplication(tk.Frame):
         if not selected_indices:
             return
 
+        self.notebook.select(self.settings_tab)
         selected_path = self.file_listbox.get(selected_indices[0])
+        self.status_var.set(f"Selected: {os.path.basename(selected_path)}")
         self.log(f"Selected file: {selected_path}")
 
         try:
-            # Read the file with CP949 encoding, which is the correct approach for legacy Korean PowerBuilder files.
             with open(selected_path, 'r', encoding='cp949') as f:
                 file_content = f.read()
             
@@ -139,11 +235,56 @@ class MainApplication(tk.Frame):
 
     def preview_changes(self):
         self.log("Preview Changes button clicked.")
-        pass
+        source_code = self.original_text.get("1.0", tk.END)
+        if not source_code.strip():
+            self.log("No source code to preview.")
+            return
+
+        selected_rules = [rule_id for rule_id, var in self.rules_vars.items() if var.get()]
+        self.log(f"Applying selected rules: {', '.join(selected_rules)}")
+
+        transformed_code, reports = self.engine.apply_rules(source_code, selected_rules)
+        self.last_reports = reports
+
+        self.highlight_diff(source_code, transformed_code)
+        self.notebook.select(self.compare_tab)
+
+        self.log('--- Transformation Report ---')
+        for report in reports:
+            self.log(f"Rule: {report.get('rule', 'N/A')}, Status: {report.get('status', 'N/A')}, Details: {report.get('details', '')}")
+        self.log('--- End of Report ---')
 
     def save_file(self):
         self.log("Save to Target button clicked.")
-        pass
+        selected_indices = self.file_listbox.curselection()
+        if not selected_indices:
+            messagebox.showerror("Error", "No file selected.")
+            return
+
+        source_path = self.file_listbox.get(selected_indices[0])
+        migrated_code = self.migrated_text.get("1.0", tk.END).strip()
+
+        if not migrated_code:
+            messagebox.showerror("Error", "No migrated code to save. Please run 'Preview Changes' first.")
+            return
+
+        relative_path = os.path.relpath(source_path, os.path.join(self.project_root, 'source'))
+        target_path = os.path.join(self.project_root, 'target', relative_path)
+        
+        os.makedirs(os.path.dirname(target_path), exist_ok=True)
+
+        try:
+            with open(target_path, 'w', encoding='utf-16-le', newline='\r\n') as f:
+                f.write(migrated_code)
+            self.log(f"Successfully saved file to: {target_path}")
+            messagebox.showinfo("Success", f"File saved to:\n{target_path}")
+
+            report_path = reporting.generate_report(source_path, target_path, self.last_reports)
+            self.log(f"Generated report: {report_path}")
+
+        except Exception as e:
+            self.log(f"Error saving file: {e}")
+            messagebox.showerror("Error", f"An error occurred while saving the file:\n{e}")
 
     def log(self, message):
         self.log_text.insert(tk.END, message + "\n")
