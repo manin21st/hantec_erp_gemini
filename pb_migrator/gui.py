@@ -10,13 +10,11 @@ class MainApplication(tk.Frame):
         self.parent.title("PBMigrator")
         self.parent.geometry("1400x900")
         
-        # Find the absolute path to the project root to locate worklist.md
-        # Assumes this script is in pb_migrator/ and worklist.md is in the parent directory.
         self.project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
         self.worklist_path = os.path.join(self.project_root, "worklist.md")
 
         self.create_widgets()
-        self.load_worklist() # Automatically load the worklist on startup
+        self.load_worklist()
 
     def create_widgets(self):
         main_paned_window = ttk.PanedWindow(self.parent, orient=tk.HORIZONTAL)
@@ -66,7 +64,8 @@ class MainApplication(tk.Frame):
         rules_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=10, pady=5)
         
         self.rules_vars = {}
-        for i in range(1, 7):
+        # P-06 is now handled by correct encoding, so we only need P-01 to P-05
+        for i in range(1, 6):
             rule_id = f"P-0{i}"
             var = tk.BooleanVar(value=True)
             self.rules_vars[rule_id] = var
@@ -100,7 +99,6 @@ class MainApplication(tk.Frame):
                 match = path_regex.search(line)
                 if match:
                     file_path = match.group(1).strip()
-                    # Ensure the path is absolute, otherwise join with project root
                     if not os.path.isabs(file_path):
                         file_path = os.path.join(self.project_root, file_path)
                     self.file_listbox.insert(tk.END, file_path)
@@ -123,20 +121,20 @@ class MainApplication(tk.Frame):
         self.log(f"Selected file: {selected_path}")
 
         try:
-            file_content = ""
-            # PowerBuilder files often use legacy encodings. Try cp949 first for Korean Windows.
-            with open(selected_path, 'r', encoding='cp949', errors='ignore') as f:
+            # Read the file with CP949 encoding, which is the correct approach for legacy Korean PowerBuilder files.
+            with open(selected_path, 'r', encoding='cp949') as f:
                 file_content = f.read()
             
             self.original_text.delete('1.0', tk.END)
             self.original_text.insert('1.0', file_content)
             self.migrated_text.delete('1.0', tk.END)
+            self.log("Successfully loaded and displayed original file content.")
 
         except FileNotFoundError:
             self.log(f"Error: Could not find file {selected_path}")
             messagebox.showerror("Error", f"Could not find the selected file:\n{selected_path}")
         except Exception as e:
-            self.log(f"Error reading file: {e}")
+            self.log(f"Error reading file with CP949 encoding: {e}")
             messagebox.showerror("Error", f"An error occurred while reading the file:\n{e}")
 
     def preview_changes(self):
