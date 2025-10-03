@@ -36,13 +36,13 @@ class MigrationEngine:
         # 규칙 ID와 해당 규칙을 구현한 파이썬 모듈을 매핑하는 딕셔너리입니다.
         # 이를 통해 규칙을 동적으로 임포트하여 적용할 수 있습니다.
         self.rule_module_map = {
-            "P-01": "pb_migrator.rules.p01_encoding",
-            "P-02": "pb_migrator.rules.p02_inheritance",
-            "P-03": "pb_migrator.rules.p03_events",
-            "P-04": "pb_migrator.rules.p04_std_events",
-            "P-05": "pb_migrator.rules.p05_controls",
-            "P-07": "pb_migrator.rules.p07_gui_modernization",
-            "P-08": "pb_migrator.rules.p08_mdi_events",
+            "P-01": ".p01_encoding",
+            "P-02": ".p02_inheritance",
+            "P-03": ".p03_events",
+            "P-04": ".p04_std_events",
+            "P-05": ".p05_controls",
+            "P-07": ".p07_gui_modernization",
+            "P-08": ".p08_mdi_events",
         }
 
     def apply_rules(self, code, selected_rules, **kwargs):
@@ -68,7 +68,7 @@ class MigrationEngine:
                     # 규칙 ID에 해당하는 모듈 이름을 가져옵니다.
                     module_name = self.rule_module_map[rule_id]
                     # importlib를 사용하여 모듈을 동적으로 임포트합니다.
-                    rule_module = importlib.import_module(module_name)
+                    rule_module = importlib.import_module(module_name, package='pb_migrator.rules')
                     # 해당 모듈의 apply 함수를 호출하여 변환을 수행합니다.
                     transformed_code, report = rule_module.apply(transformed_code, **kwargs)
                     reports.append(report)

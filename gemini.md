@@ -46,6 +46,26 @@
 
 ---
 
+## 2.5. PBMigrator 빌드 및 재배포
+
+`PBMigrator`의 소스 코드를 수정한 후, 사용자가 직접 실행할 수 있는 `.exe` 파일을 만들려면 `PBMigrator.spec` 파일을 사용하여 빌드를 진행합니다.
+
+**빌드 절차**
+
+1.  **전제 조건**: 로컬 시스템에 **Python**과 **PyInstaller** 라이브러리가 설치되어 있어야 합니다.
+2.  **빌드 실행**: 프로젝트 최상위 폴더(`hantec_erp_gemini`)에서 다음 명령어를 실행합니다. `PBMigrator.spec` 파일에는 필요한 모든 빌드 설정이 이미 포함되어 있습니다.
+
+    ```shell
+    py -m PyInstaller PBMigrator.spec
+    ```
+
+3.  **결과 확인**: 빌드가 성공하면 `dist` 폴더에 `PBMigrator.exe` 파일이 생성됩니다.
+
+**중요 사항**:
+- 빌드 실패 시 `PermissionError`가 발생한다면, 이전에 실행했던 `PBMigrator.exe`가 종료되지 않았거나 다른 프로그램이 파일을 잠근 상태일 수 있습니다. `dist` 폴더의 `.exe` 파일을 수동으로 삭제한 후 다시 빌드를 시도하십시오.
+
+---
+
 ## 3. 마이그레이션 최종 패턴
 
 ### 3.1. [Level 0] 파일 형식 (Physical Layer)

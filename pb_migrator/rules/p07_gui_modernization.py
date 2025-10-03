@@ -4,7 +4,7 @@
 """
 
 import re
-from pb_migrator.rules import p05_controls
+from . import p05_controls
 
 def get_control_properties(control_block):
     """컨트롤 정의 블록 문자열에서 x, y, width, height 속성을 추출합니다."""
@@ -80,14 +80,25 @@ def apply(code, **kwargs):
     """
     
     # 윈도우의 이름과 원본 크기를 추출합니다.
-    window_name_match = re.search(r'global type (\w+?) from \w+\s*\n\s*integer width = (\d+)\s*\n\s*integer height = (\d+)', code, re.DOTALL)
+    window_name_match = re.search(r'global type (w_\w+)\s+from', code)
     if not window_name_match:
-        return code, {"rule": "P-07", "status": "오류", "details": "윈도우 이름이나 크기를 결정할 수 없습니다."}
-    
+        return code, {"rule": "P-07", "status": "오류", "details": "윈도우 이름을 찾을 수 없습니다."}
     window_name = window_name_match.group(1)
+
+    window_block_match = re.search(fr'global type {window_name} from [\s\S]*?end type', code)
+    if not window_block_match:
+        return code, {"rule": "P-07", "status": "오류", "details": f"{window_name} 윈도우의 정의 블록을 찾을 수 없습니다."}
+    window_block = window_block_match.group(0)
+
+    width_match = re.search(r'integer width = (\d+)', window_block)
+    height_match = re.search(r'integer height = (\d+)', window_block)
+
+    original_width = int(width_match.group(1)) if width_match else 4600 # 너비가 없으면 기본값 사용
+    original_height = int(height_match.group(1)) if height_match else 2300 # 높이가 없으면 기본값 사용
+
     original_window_props = {
-        "width": int(window_name_match.group(2)),
-        "height": int(window_name_match.group(3))
+        "width": original_width,
+        "height": original_height
     }
 
     # P-05 규칙을 먼저 실행하여 오래된 장식 컨트롤을 정리합니다.

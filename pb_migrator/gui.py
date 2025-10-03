@@ -17,8 +17,8 @@ import os
 import re
 import difflib
 import sys
-from engine import MigrationEngine
-import reporting
+from .engine import MigrationEngine
+from . import reporting
 
 class MainApplication(tk.Frame):
     """
