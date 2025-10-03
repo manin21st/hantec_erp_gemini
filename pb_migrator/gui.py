@@ -17,6 +17,7 @@ import os
 import re
 import difflib
 import sys
+import time
 from .engine import MigrationEngine
 
 class MainApplication(tk.Frame):
@@ -231,6 +232,7 @@ class MainApplication(tk.Frame):
                 self.migrated_text.tag_add("insert", f"{j1 + 1}.0", f"{j2}.0 + {len(migrated_lines[j2-1])} chars")
 
     def load_worklist(self):
+        """'source' 디렉토리에서 .srw 파일 목록을 재귀적으로 불러와 리스트박스에 채웁니다."""
         source_dir = os.path.join(self.project_root, "source")
         self.log(f"Loading files from: {source_dir}")
         self.file_listbox.delete(0, tk.END)
@@ -238,7 +240,9 @@ class MainApplication(tk.Frame):
         try:
             file_count = 0
             file_list = []
-            for root, _, files in os.walk(source_dir):
+            for root, dirs, files in os.walk(source_dir):
+                # `_`로 시작하는 폴더는 탐색에서 제외합니다.
+                dirs[:] = [d for d in dirs if not d.startswith('_')]
                 for file in files:
                     if file.endswith(".srw"):
                         file_list.append(os.path.join(root, file))
@@ -367,55 +371,67 @@ class MainApplication(tk.Frame):
 
         total_files = len(files_to_process)
         processed_count = 0
+        batch_logs = []
+        temp_log_path = os.path.join(self.project_root, f"temp_batch_log_{time.strftime('%Y%m%d_%H%M%S')}.txt")
+
         try:
-            for i, source_path in enumerate(files_to_process):
-                if self.cancellation_requested:
-                    break
+            with open(temp_log_path, 'w', encoding='utf-8') as temp_log_file:
+                for i, source_path in enumerate(files_to_process):
+                    if self.cancellation_requested:
+                        break
 
-                filename = os.path.basename(source_path)
-                progress_label.config(text=f"Processing ({i+1}/{total_files}): {filename}")
-                
-                percentage = (i + 1) / total_files * 100
-                percent_label.config(text=f"{percentage:.0f}%")
+                    filename = os.path.basename(source_path)
+                    progress_label.config(text=f"Processing ({i+1}/{total_files}): {filename}")
+                    percentage = (i + 1) / total_files * 100
+                    percent_label.config(text=f"{percentage:.0f}%")
+                    progress_var.set(i + 1)
+                    progress_window.update()
 
-                progress_var.set(i + 1)
-                progress_window.update()
+                    try:
+                        with open(source_path, 'r', encoding='cp949', errors='ignore') as f:
+                            source_code = f.read()
 
-                try:
-                    self.log(f"\n--- Processing file: {source_path} ---")
-                    with open(source_path, 'r', encoding='cp949', errors='ignore') as f:
-                        source_code = f.read()
+                        transformed_code, reports = self.engine.apply_rules(source_code, selected_rules)
+                        
+                        log_entry = [f"\n--- Transformation Report for {filename} ---"]
+                        for report in reports:
+                            log_entry.append(f"Rule: {report.get('rule', 'N/A')}, Status: {report.get('status', 'N/A')}, Details: {report.get('details', '')}")
+                        log_entry.append('--- End of Report ---')
 
-                    transformed_code, reports = self.engine.apply_rules(source_code, selected_rules)
+                        relative_path = os.path.relpath(source_path, os.path.join(self.project_root, 'source'))
+                        target_path = os.path.join(self.project_root, 'target', relative_path)
+                        os.makedirs(os.path.dirname(target_path), exist_ok=True)
 
-                    self.log('--- Transformation Report ---')
-                    for report in reports:
-                        self.log(f"Rule: {report.get('rule', 'N/A')}, Status: {report.get('status', 'N/A')}, Details: {report.get('details', '')}")
-                    self.log('--- End of Report ---')
+                        with open(target_path, 'w', encoding='utf-16-le', newline='\r\n') as f:
+                            f.write(transformed_code)
+                        
+                        log_entry.append(f"Successfully saved file to: {target_path}")
+                        temp_log_file.write("\n".join(log_entry) + "\n")
+                        processed_count += 1
 
-                    relative_path = os.path.relpath(source_path, os.path.join(self.project_root, 'source'))
-                    target_path = os.path.join(self.project_root, 'target', relative_path)
-                    os.makedirs(os.path.dirname(target_path), exist_ok=True)
-
-                    with open(target_path, 'w', encoding='utf-16-le', newline='\r\n') as f:
-                        f.write(transformed_code)
-                    
-                    self.log(f"Successfully saved file to: {target_path}")
-                    processed_count += 1
-
-                except Exception as e:
-                    error_msg = f"Error processing {filename}: {e}"
-                    self.log(error_msg)
-                    if not messagebox.askretrycancel("Batch Process Error", f"{error_msg}\n\nDo you want to continue with the next file?", parent=progress_window):
-                        self.cancellation_requested = True
+                    except Exception as e:
+                        error_msg = f"Error processing {filename}: {e}"
+                        self.log(error_msg)
+                        temp_log_file.write(error_msg + "\n")
+                        if not messagebox.askretrycancel("Batch Process Error", f"{error_msg}\n\nDo you want to continue with the next file?", parent=progress_window):
+                            self.cancellation_requested = True
 
         finally:
-            self.toggle_buttons_state(tk.NORMAL)
             progress_window.destroy()
+            self.toggle_buttons_state(tk.NORMAL)
+
+            if os.path.exists(temp_log_path):
+                with open(temp_log_path, 'r', encoding='utf-8') as f:
+                    final_log_content = f.read()
+                self.log("\n--- Batch Process Summary ---")
+                self.log(final_log_content)
+                self.log("--- End of Batch Process Summary ---")
+                if not self.cancellation_requested: # 성공적으로 끝나면 임시 파일 삭제
+                    os.remove(temp_log_path)
 
             if self.cancellation_requested:
-                messagebox.showinfo("Cancelled", f"Batch process was cancelled. {processed_count}/{total_files} files were processed.")
-                self.log(f"Batch process cancelled. {processed_count} files processed.")
+                messagebox.showinfo("Cancelled", f"Batch process was cancelled. {processed_count}/{total_files} files were processed.\nDetailed log saved to: {temp_log_path}")
+                self.log(f"Batch process cancelled. Detailed log: {temp_log_path}")
             else:
                 messagebox.showinfo("Success", f"Batch process completed. {processed_count}/{total_files} files successfully processed.")
                 self.log(f"Batch process finished. {processed_count} files processed.")
