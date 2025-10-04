@@ -118,42 +118,79 @@ def apply(code, **kwargs):
     if 'r_head' not in code:
         # 1. 변수 선언 추가 (예: r_head r_head)
         code = re.sub(r'(global type \w+ from \w+)', r'\1\n r_head r_head', code, 1)
-        # 2. create 이벤트에 생성 코드 추가 (예: this.r_head=create r_head)
-        code = re.sub(r'(on \w+\.create(?:.|\n)*?call super::create)', r'\1\nthis.r_head=create r_head', code, flags=re.DOTALL)
-        # 3. destroy 이벤트에 파괴 코드 추가 (예: destroy(this.r_head))
-        code = re.sub(r'(on \w+\.destroy(?:.|\n)*?call super::destroy)', r'\1\ndestroy(this.r_head)', code, flags=re.DOTALL)
+        # 2. create 이벤트에 생성 코드 추가 (더 유연한 방식)
+        create_event_match = re.search(r'(on \w+\.create(?:.|\n)*?)(end on|end event)', code, flags=re.IGNORECASE | re.DOTALL)
+        if create_event_match:
+            injection_point = create_event_match.group(1)
+            end_marker = create_event_match.group(2)
+            new_create_block = f'{injection_point}this.r_head=create r_head\n{end_marker}'
+            code = code.replace(create_event_match.group(0), new_create_block)
+        
+        # 3. destroy 이벤트에 파괴 코드 추가 (더 유연한 방식)
+        destroy_event_match = re.search(r'(on \w+\.destroy(?:.|\n)*?)(end on|end event)', code, flags=re.IGNORECASE | re.DOTALL)
+        if destroy_event_match:
+            injection_point = destroy_event_match.group(1)
+            end_marker = destroy_event_match.group(2)
+            new_destroy_block = f'{injection_point}destroy(this.r_head)\n{end_marker}'
+            code = code.replace(destroy_event_match.group(0), new_destroy_block)
+
         # 4. 컨트롤의 상세 정의 블록 추가
         code += "\n\n" + r_head_def
 
     if 'r_detail' not in code:
         code = re.sub(r'(global type \w+ from \w+)', r'\1\n r_detail r_detail', code, 1)
-        code = re.sub(r'(on \w+\.create(?:.|\n)*?call super::create)', r'\1\nthis.r_detail=create r_detail', code, flags=re.DOTALL)
-        code = re.sub(r'(on \w+\.destroy(?:.|\n)*?call super::destroy)', r'\1\ndestroy(this.r_detail)', code, flags=re.DOTALL)
+        create_event_match = re.search(r'(on \w+\.create(?:.|\n)*?)(end on|end event)', code, flags=re.IGNORECASE | re.DOTALL)
+        if create_event_match:
+            injection_point = create_event_match.group(1)
+            end_marker = create_event_match.group(2)
+            new_create_block = f'{injection_point}this.r_detail=create r_detail\n{end_marker}'
+            code = code.replace(create_event_match.group(0), new_create_block)
+
+        destroy_event_match = re.search(r'(on \w+\.destroy(?:.|\n)*?)(end on|end event)', code, flags=re.IGNORECASE | re.DOTALL)
+        if destroy_event_match:
+            injection_point = destroy_event_match.group(1)
+            end_marker = destroy_event_match.group(2)
+            new_destroy_block = f'{injection_point}destroy(this.r_detail)\n{end_marker}'
+            code = code.replace(destroy_event_match.group(0), new_destroy_block)
+
         code += "\n\n" + r_detail_def
 
     # --- 기존 컨트롤들을 새로운 레이아웃에 맞게 재배치 ---
     repositioned = []
-    
-    # 윈도우 내의 모든 컨트롤 정의를 찾습니다.
-    control_defs_matches = re.findall(r'(type\s+(\w+)\s+from[\s\S]*?end type)', code)
+    processed_controls = set()
 
-    for control_block_full, control_name in control_defs_matches:
-        # 방금 추가한 r_head, r_detail 자체는 재배치 대상에서 제외합니다.
-        if control_name in ['r_head', 'r_detail']:
-            continue
+    while True:
+        # 아직 처리되지 않은 컨트롤 정의를 찾습니다.
+        control_match = re.search(r'type\s+((?!r_head|r_detail)\w+)\s+from[\s\S]*?end type', code, re.IGNORECASE)
+        
+        if not control_match:
+            break # 더 이상 처리할 컨트롤이 없으면 루프 종료
 
+        control_name = control_match.group(1)
+        
+        # 이미 처리한 컨트롤이면 건너뜁니다.
+        if control_name in processed_controls:
+            # 이 경우는 보통 중첩 구조로 인해 발생하며, 바깥쪽 루프에서 처리될 때까지 기다립니다.
+            # 안전장치: 무한 루프 방지를 위해 간단히 break 합니다.
+            # 더 정교한 방법은 건너뛰고 다음 매치를 찾는 것이지만, 현재 구조에서는 복잡합니다.
+            break
+
+        control_block_full = control_match.group(0)
         original_control_props = get_control_properties(control_block_full)
         
-        # 컨트롤의 원본 y 위치에 따라 r_head 또는 r_detail로 배치할지 결정합니다. (휴리스틱)
-        # 원본 윈도우 높이의 상위 30%에 위치했던 컨트롤은 상단(r_head)으로, 나머지는 하단(r_detail)으로 이동합니다.
+        # 컨트롤의 원본 y 위치에 따라 r_head 또는 r_detail로 배치할지 결정합니다.
         if original_control_props["y"] < original_window_props["height"] * 0.3:
             target_rect_props = r_head_props
         else:
             target_rect_props = r_detail_props
 
-        code, success = reposition_control(code, control_name, original_window_props, target_rect_props, original_control_props)
-        if success: 
+        new_code, success = reposition_control(code, control_name, original_window_props, target_rect_props, original_control_props)
+        
+        if success:
             repositioned.append(control_name)
+            code = new_code # 코드를 업데이트합니다.
+        
+        processed_controls.add(control_name) # 처리된 컨트롤로 등록합니다.
 
     # 정리: 연속된 빈 줄들을 하나로 줄입니다.
     code = re.sub(r'(\r?\n){3,}', '\r\n\r\n', code)

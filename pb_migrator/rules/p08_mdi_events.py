@@ -48,11 +48,16 @@ def apply(code, **kwargs):
         prototypes_content = forward_match.group(2)
         original_prototypes_block = forward_match.group(0)
 
-    # 이벤트 스크립트를 추가할 위치를 찾습니다. (보통 `end variables` 바로 다음)
-    injection_point_match = re.search(r'end variables\s*?(\r?\n)', code, re.IGNORECASE)
-    if not injection_point_match:
-        return code, {"rule": "P-08", "status": "건너뜀", "details": "'end variables' 섹션을 찾지 못했습니다."}
+    # 이벤트 스크립트를 추가할 위치를 찾습니다.
+    # 1순위: `end variables` 바로 다음
+    injection_point_match = re.search(r'(end variables\s*?(\r?\n))', code, re.IGNORECASE)
     
+    # 2순위: `end variables`가 없으면 윈도우 정의 블록(`global type...`) 바로 다음
+    if not injection_point_match:
+        injection_point_match = re.search(r'(global type w_\w+\s+from\s+window.*?end type\s*?(\r?\n))', code, re.DOTALL | re.IGNORECASE)
+
+    if not injection_point_match:
+        return code, {"rule": "P-08", "status": "건너뜀", "details": "이벤트 스크립트를 추가할 위치를 찾지 못했습니다."}
     added_events = []
     new_event_prototypes = ""
     injection_code = ""

@@ -420,6 +420,7 @@ class MainApplication(tk.Frame):
             progress_window.destroy()
             self.toggle_buttons_state(tk.NORMAL)
 
+            # --- 임시 로그 파일의 내용을 메인 로그 창으로 이동 ---
             if os.path.exists(temp_log_path):
                 with open(temp_log_path, 'r', encoding='utf-8') as f:
                     final_log_content = f.read()
@@ -427,11 +428,32 @@ class MainApplication(tk.Frame):
                 self.log(final_log_content)
                 self.log("--- End of Batch Process Summary ---")
                 if not self.cancellation_requested: # 성공적으로 끝나면 임시 파일 삭제
-                    os.remove(temp_log_path)
+                    try:
+                        os.remove(temp_log_path)
+                    except OSError as e:
+                        self.log(f"Could not remove temporary log file: {e}")
 
+            # --- 전체 로그를 파일에 저장 ---
+            logs_dir = os.path.join(self.project_root, "logs")
+            os.makedirs(logs_dir, exist_ok=True)
+            log_filename = f"PBMigrator_Batch_{time.strftime('%Y%m%d_%H%M%S')}.log"
+            log_filepath = os.path.join(logs_dir, log_filename)
+            
+            try:
+                with open(log_filepath, 'w', encoding='utf-8') as f:
+                    f.write(self.log_text.get("1.0", tk.END))
+                self.log(f"Batch process log saved to: {log_filepath}")
+            except Exception as e:
+                self.log(f"Error saving log file: {e}")
+                messagebox.showerror("Log Save Error", f"Failed to save log file to {log_filepath}\n{e}")
+
+            # --- 최종 상태 메시지 표시 ---
             if self.cancellation_requested:
-                messagebox.showinfo("Cancelled", f"Batch process was cancelled. {processed_count}/{total_files} files were processed.\nDetailed log saved to: {temp_log_path}")
-                self.log(f"Batch process cancelled. Detailed log: {temp_log_path}")
+                msg = f"Batch process was cancelled. {processed_count}/{total_files} files were processed."
+                if os.path.exists(temp_log_path):
+                     msg += f"\nTemporary log with details on failed files: {temp_log_path}"
+                messagebox.showinfo("Cancelled", msg)
+                self.log(msg)
             else:
                 messagebox.showinfo("Success", f"Batch process completed. {processed_count}/{total_files} files successfully processed.")
                 self.log(f"Batch process finished. {processed_count} files processed.")
