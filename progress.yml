@@ -3,8 +3,11 @@ summary: |
   - `gemini.md` 핸드북에 최종 패턴(P-01~P-08) 및 `PBMigrator` 개발 목표/사용법 명시 완료
   - `specification.md` 명세서에 최종 UI/UX 설계 반영 완료
   - `PBMigrator` 프로토타입 개발 완료 (탭 UI, Diff, 저장, 보고서, 스크롤 동기화 등 모든 요청사항 반영)
-  - `checklist.md` 등 불필요한 문서 정리 및 `gemini.md` 최종 간소화 완료
-  - `PBMigrator` 규칙 고도화 진행 중 (P-07 컨트롤 재배치 로직 구현, P-01 명확화, P-06 현상 파악 보류)
+  - `checklist.md` 등 불필요한 문서 정리 및 `gemini.md` 최종 간소화 완료.
+  - P-06 인코딩 이슈 분석 및 관련 문서 정리 완료.
+  - PBMigrator의 P-07(UI) 규칙 및 경로 로직 버그 수정, 빌드 프로세스 안정화.
+  - 반복적인 실수를 방지하기 위한 새로운 핵심 운영 원칙 수립.
+  - PBMigrator.exe 실행 오류의 근본 원인(모듈 누락, BOM 인코딩)을 진단 및 해결하고, 관련 문서를 최신화하여 빌드 안정성 확보.
 user_notes: |
   # 사용자 메모
   여기에 자유롭게 메모를 남겨주세요. 다음 세션 시작 시 제가 확인하겠습니다.
@@ -110,4 +113,25 @@ detailed_log:
   target: "PBMigrator Build & Rules"
   description: "PyInstaller 빌드 오류 및 규칙 실행 오류 해결. P-07(UI), P-03(이벤트), P-08(MDI) 규칙의 파싱 로직을 수정하여 안정성 확보. gemini.md 핸드북에 안정화된 빌드 절차 반영."
   checklist_result: "N/A"
+  worker: "Gemini"
+- timestamp: '2025-10-15 10:00:00'
+  status: "완료"
+  target: "P-06 한글 인코딩 처리"
+  description: "P-06(깨진 한글) 문제 분석 완료. 소스 파일(CP949)과 타겟 파일(UTF-16 LE)의 인코딩 처리가 PBMigrator의 파일 I/O 로직에서 이미 올바르게 구현되었음을 확인. 별도 규칙이 불필요하여 관련 문서를 정리함."
+  checklist_result: "N/A"
+  worker: "Gemini"
+- timestamp: '2025-10-15 11:00:00'
+  status: "진행 중"
+  target: "PBMigrator 안정화 및 신뢰 회복"
+  description: |
+    - P-07 규칙의 구조적 오류(잘못된 컨트롤 선언 위치)를 재수정하여, 생성된 파일의 PowerBuilder 임포트 실패 문제 해결 시도.
+    - 빌드 프로세스에서 반복적으로 발생한 오류(PyInstaller 미설치, .spec 부재, 출력 폴더 중복)들을 해결하며 빌드 절차 안정화.
+    - `gui.py`의 경로 탐색 로직을 수정하여, 빌드된 .exe 파일이 `source` 폴더를 정상적으로 찾도록 수정.
+    - 반복적인 프로세스 오류를 근절하기 위해, "새 세션 시작 시 모든 관리 문서를 먼저 읽는다"는 핵심 운영 원칙을 정립하고 장기 기억에 저장함.
+    - 현재, 수정된 최종 빌드 결과물을 사용자가 직접 테스트하기 위해 대기 중.
+  worker: "Gemini"
+- timestamp: '2025-10-15 18:00:00'
+  status: "완료"
+  target: "PBMigrator 안정화 및 문서 최신화"
+  description: "PBMigrator.exe 실행 오류의 근본 원인(모듈 누락, BOM 인코딩)을 진단하고 해결. `PBMigrator.spec` 및 `gui.py`를 수정하여 안정적인 빌드 확보. `gemini.md`에 '클린 빌드' 등 최신화된 빌드 절차를 반영하여 문서 현행화 완료."
   worker: "Gemini"

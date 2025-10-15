@@ -44,14 +44,11 @@ class MainApplication(tk.Frame):
             self.parent.geometry("1600x900")
 
         if getattr(sys, 'frozen', False):
-            exe_dir = os.path.dirname(sys.executable)
-            if os.path.isdir(os.path.join(exe_dir, 'source')):
-                self.project_root = exe_dir
-            elif os.path.isdir(os.path.join(exe_dir, '..', 'source')):
-                self.project_root = os.path.abspath(os.path.join(exe_dir, '..'))
-            else:
-                self.project_root = exe_dir
+            # When running as a PyInstaller bundle, sys.executable is the path to the .exe.
+            # The project root is one level up from the .exe's directory (e.g., 'dist').
+            self.project_root = os.path.abspath(os.path.join(os.path.dirname(sys.executable), '..'))
         else:
+            # When running as a script, this file is in pb_migrator/, so the root is one level up.
             self.project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
         
         self.engine = MigrationEngine()
@@ -320,8 +317,8 @@ class MainApplication(tk.Frame):
         os.makedirs(os.path.dirname(target_path), exist_ok=True)
 
         try:
-            with open(target_path, 'w', encoding='utf-16-le', newline='\r\n') as f:
-                f.write(transformed_code)
+            with open(target_path, 'wb') as f:
+                f.write(transformed_code.encode('utf-16-le'))
             self.log(f"Successfully auto-saved file to: {target_path}")
             self.status_var.set(f"Saved: {os.path.basename(target_path)}")
         except Exception as e:
@@ -402,8 +399,8 @@ class MainApplication(tk.Frame):
                         target_path = os.path.join(self.project_root, 'target', relative_path)
                         os.makedirs(os.path.dirname(target_path), exist_ok=True)
 
-                        with open(target_path, 'w', encoding='utf-16-le', newline='\r\n') as f:
-                            f.write(transformed_code)
+                        with open(target_path, 'wb') as f:
+                            f.write(transformed_code.encode('utf-16-le'))
                         
                         log_entry.append(f"Successfully saved file to: {target_path}")
                         temp_log_file.write("\n".join(log_entry) + "\n")
