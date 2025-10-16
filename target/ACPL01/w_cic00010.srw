@@ -1,53 +1,72 @@
 $PBExportHeader$w_cic00010.srw
 $PBExportComments$품목별 진척도 등록
-forward
+forward
 global type w_cic00010 from w_inherite
 end type
 type dw_2 from datawindow within w_cic00010
 end type
-type gb_4 from groupbox within w_cic00010
-end type
+
 type dw_1 from datawindow within w_cic00010
-end type
-type rr_1 from roundrectangle within w_cic00010
-end type
-end forward
+end type
+event ue_retrieve()
+event ue_update()
+event ue_delete()
+event ue_append()
+event ue_cancel()
+event ue_print()
+event ue_enterkey ( )
+event ue_key ( )
+event ue_pressenter ( )
+end forward
 
 global type w_cic00010 from w_inherite
 integer height = 3264
 string title = "품목별 진척도 등록"
 dw_2 dw_2
-gb_4 gb_4
 dw_1 dw_1
-rr_1 rr_1
+r_head r_head
+r_detail r_detail
 end type
 global w_cic00010 w_cic00010
 
 type variables
 
 end variables
+
+
+event ue_retrieve;if IsValid(p_inq) then p_inq.TriggerEvent(Clicked!)end event
+
+event ue_update;if IsValid(p_mod) then p_mod.TriggerEvent(Clicked!)end event
+
+event ue_delete;if IsValid(p_del) then p_del.TriggerEvent(Clicked!)end event
+
+event ue_append;if IsValid(p_addrow) then p_addrow.TriggerEvent(Clicked!)end event
+
+event ue_cancel;if IsValid(p_can) then p_can.TriggerEvent(Clicked!)end event
+
+event ue_print;if IsValid(p_print) then p_print.TriggerEvent(Clicked!)end event
 
 on w_cic00010.create
 int iCurrent
 call super::create
 this.dw_2=create dw_2
-this.gb_4=create gb_4
 this.dw_1=create dw_1
-this.rr_1=create rr_1
 iCurrent=UpperBound(this.Control)
 this.Control[iCurrent+1]=this.dw_2
 this.Control[iCurrent+2]=this.gb_4
 this.Control[iCurrent+3]=this.dw_1
 this.Control[iCurrent+4]=this.rr_1
+this.r_head=create r_head
+this.r_detail=create r_detail
 end on
 
 on w_cic00010.destroy
 call super::destroy
 if IsValid(MenuID) then destroy(MenuID)
 destroy(this.dw_2)
-destroy(this.gb_4)
 destroy(this.dw_1)
-destroy(this.rr_1)
+destroy(this.r_head)
+destroy(this.r_detail)
 end on
 
 event open;call super::open;dw_1.SetTransObject(SQLCA)
@@ -75,50 +94,41 @@ ib_any_typing = False
 end event
 
 type dw_insert from w_inherite`dw_insert within w_cic00010
-boolean visible = false
-integer x = 41
-integer y = 2404
+boolean x = 2727
+		y = 1500
 integer taborder = 0
 end type
 
 type p_delrow from w_inherite`p_delrow within w_cic00010
-boolean visible = false
-integer x = 3849
-integer y = 3184
+boolean x = 2727
+		y = 1500
 integer taborder = 0
 end type
 
 type p_addrow from w_inherite`p_addrow within w_cic00010
-boolean visible = false
-integer x = 3675
-integer y = 3184
+boolean x = 2727
+		y = 1500
 integer taborder = 0
 end type
 
 type p_search from w_inherite`p_search within w_cic00010
-boolean visible = false
-integer x = 3319
-integer y = 3188
+boolean x = 2727
+		y = 1500
 integer taborder = 0
 end type
 
 type p_ins from w_inherite`p_ins within w_cic00010
-boolean visible = false
-integer x = 3712
-integer y = 2852
+boolean x = 2727
+		y = 1500
 integer taborder = 0
 string pointer = "C:\erpman\cur\new.cur"
 end type
 
 type p_exit from w_inherite`p_exit within w_cic00010
-integer x = 4370
-integer y = 0
 integer taborder = 60
 end type
 
 type p_can from w_inherite`p_can within w_cic00010
-integer x = 4197
-integer y = 0
 integer taborder = 50
 end type
 
@@ -127,21 +137,17 @@ w_mdi_frame.sle_msg.text =""
 
 dw_2.Reset()
 
-ib_any_typing =False
-
-
+ib_any_typing =False
+
 end event
 
 type p_print from w_inherite`p_print within w_cic00010
-boolean visible = false
-integer x = 3493
-integer y = 3188
+boolean x = 2727
+		y = 1500
 integer taborder = 0
 end type
 
 type p_inq from w_inherite`p_inq within w_cic00010
-integer x = 3849
-integer y = 0
 end type
 
 event p_inq::clicked;call super::clicked;String sItcls,sIttyp,sItnbr
@@ -181,15 +187,12 @@ SetPointer(Arrow!)
 end event
 
 type p_del from w_inherite`p_del within w_cic00010
-boolean visible = false
-integer x = 3703
-integer y = 2708
+boolean x = 2727
+		y = 1500
 integer taborder = 0
 end type
 
 type p_mod from w_inherite`p_mod within w_cic00010
-integer x = 4023
-integer y = 0
 integer taborder = 40
 end type
 
@@ -215,86 +218,63 @@ END IF
 end event
 
 type cb_exit from w_inherite`cb_exit within w_cic00010
-boolean visible = false
-integer x = 3259
-integer y = 2756
+boolean x = 2727
+		y = 1500
 end type
 
 type cb_mod from w_inherite`cb_mod within w_cic00010
-boolean visible = false
-integer x = 2199
-integer y = 2752
+boolean x = 2727
+		y = 1500
 end type
 
 type cb_ins from w_inherite`cb_ins within w_cic00010
-boolean visible = false
-integer x = 503
-integer y = 2752
+boolean x = 2727
+		y = 1500
 end type
 
 type cb_del from w_inherite`cb_del within w_cic00010
-boolean visible = false
-integer x = 2551
-integer y = 2752
+boolean x = 2727
+		y = 1500
 end type
 
 type cb_inq from w_inherite`cb_inq within w_cic00010
-boolean visible = false
-integer x = 142
-integer y = 2752
+boolean x = 2727
+		y = 1500
 end type
 
 type cb_print from w_inherite`cb_print within w_cic00010
-boolean visible = false
-integer x = 1650
-integer y = 2424
+boolean x = 2727
+		y = 1500
 end type
 
 type st_1 from w_inherite`st_1 within w_cic00010
-boolean visible = false
+boolean x = 2727
+		y = 1500
 integer width = 293
 end type
 
 type cb_can from w_inherite`cb_can within w_cic00010
-boolean visible = false
-integer x = 2907
-integer y = 2752
+boolean x = 2727
+		y = 1500
 end type
 
 type cb_search from w_inherite`cb_search within w_cic00010
-boolean visible = false
-integer x = 2053
-integer y = 2432
+boolean x = 2727
+		y = 1500
 end type
 
 type dw_datetime from w_inherite`dw_datetime within w_cic00010
-boolean visible = false
+boolean x = 2727
+		y = 1500
 integer height = 88
 end type
 
 type sle_msg from w_inherite`sle_msg within w_cic00010
-boolean visible = false
-integer x = 329
+boolean x = 2727
+		y = 1500
 integer width = 2533
-end type
-
-type gb_10 from w_inherite`gb_10 within w_cic00010
-boolean visible = false
-integer width = 3607
-end type
-
-type gb_button1 from w_inherite`gb_button1 within w_cic00010
-boolean visible = false
-integer x = 110
-integer y = 2696
-end type
-
-type gb_button2 from w_inherite`gb_button2 within w_cic00010
-boolean visible = false
-integer x = 2153
-integer y = 2696
-end type
-
+end type
+
 type dw_2 from datawindow within w_cic00010
 event ue_key pbm_dwnkey
 event ue_enterkey pbm_dwnprocessenter
@@ -344,23 +324,8 @@ event itemerror;Return 1
 end event
 
 event itemchanged;ib_any_typing = True
-end event
-
-type gb_4 from groupbox within w_cic00010
-boolean visible = false
-integer y = 2948
-integer width = 3598
-integer height = 140
-integer textsize = -9
-integer weight = 700
-fontcharset fontcharset = hangeul!
-fontpitch fontpitch = fixed!
-fontfamily fontfamily = modern!
-string facename = "굴림체"
-long textcolor = 128
-long backcolor = 12632256
-end type
-
+end event
+
 type dw_1 from datawindow within w_cic00010
 event ue_pressenter pbm_dwnprocessenter
 event ue_key pbm_dwnkey
@@ -431,9 +396,8 @@ IF this.GetColumnName() = "itnbr" THEN
 		this.SetItem(THIS.GetRow(), "itnbr_name", sNull)
 		Return 1
 	end if	
-END IF	
-
-
+END IF	
+
 end event
 
 event itemerror;Return 1
@@ -454,17 +418,42 @@ event rbuttondown;IF this.GetColumnName() = "sitnbr" THEN
 	THIS.SetItem(THIS.GetRow(), "itnbr_name", gs_codename)
 	
 END IF	
-end event
-
-type rr_1 from roundrectangle within w_cic00010
-long linecolor = 28144969
-integer linethickness = 1
-long fillcolor = 32106727
-integer x = 105
-integer y = 164
-integer width = 4453
-integer height = 2036
-integer cornerheight = 40
-integer cornerwidth = 46
+end event
+
+type r_head from rectangle within w_cic00010
+long linecolor = 28543105
+integer linethickness = 4
+long fillcolor = 12639424
+integer x = 32
+integer y = 32
+integer width = 4562
+integer height = 308
 end type
 
+type r_detail from rectangle within w_cic00010
+long linecolor = 28543105
+integer linethickness = 4
+long fillcolor = 16777215
+integer x = 32
+integer y = 352
+integer width = 4562
+integer height = 1964
+end type
+
+event resize;r_head.width = this.width - r_head.x - 30
+r_detail.width = this.width - r_detail.x - 30
+r_detail.height = this.height - r_detail.y - 65
+
+end event
+
+event activate;gw_window = this
+
+w_mdi_frame.uo_toolbarstrip.of_SetEnabled(f_get_trans_word("조회") + "(&Q)", true)
+w_mdi_frame.uo_toolbarstrip.of_SetEnabled(f_get_trans_word("추가") + "(&A)", true)
+w_mdi_frame.uo_toolbarstrip.of_SetEnabled(f_get_trans_word("삭제") + "(&D)", true)
+w_mdi_frame.uo_toolbarstrip.of_SetEnabled(f_get_trans_word("저장") + "(&S)", true)
+w_mdi_frame.uo_toolbarstrip.of_SetEnabled(f_get_trans_word("취소") + "(&Z)", true)
+w_mdi_frame.uo_toolbarstrip.of_SetEnabled(f_get_trans_word("출력") + "(&P)", true)
+
+w_mdi_frame.st_window.Text = Upper(is_window_id)
+end event

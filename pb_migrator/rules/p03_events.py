@@ -23,7 +23,7 @@ def apply(code, **kwargs):
     proto_match = re.search(r'(forward prototypes)(.*?)(end prototypes)', code, re.DOTALL | re.IGNORECASE)
     forward_match = None
     if not proto_match:
-        forward_match = re.search(r'(^forward\r?\n)([\s\S]*?)(^end forward\r?\n)', code, re.MULTILINE | re.IGNORECASE)
+        forward_match = re.search(r'(^forward\n)([\s\S]*?)(^end forward\n)', code, re.MULTILINE | re.IGNORECASE)
 
     declared_events = set()
     prototypes_content = ""
@@ -43,20 +43,20 @@ def apply(code, **kwargs):
     # 4. 누락된 이벤트를 프로토타입 블록에 추가합니다.
     new_declarations = ""
     for event in sorted(list(missing_events)):
-        new_declarations += f'\r\nevent {event} ( )'
+        new_declarations += f'\nevent {event} ( )'
     
     new_code = code
     if proto_match:
-        new_prototype_block = f'forward prototypes{prototypes_content}{new_declarations}\r\nend prototypes'
+        new_prototype_block = f'forward prototypes{prototypes_content}{new_declarations}\nend prototypes'
         new_code = code.replace(proto_match.group(0), new_prototype_block)
     elif forward_match:
-        new_block_content = prototypes_content.rstrip() + new_declarations + '\r\n'
-        new_prototype_block = f'forward\r\n{new_block_content}end forward\r\n'
+        new_block_content = prototypes_content.rstrip() + new_declarations + '\n'
+        new_prototype_block = f'forward\n{new_block_content}end forward\n'
         new_code = code.replace(forward_match.group(0), new_prototype_block)
     else:
         # forward 블록이 없으면 새로 생성
-        new_prototype_block = f'forward{new_declarations}\r\nend forward\r\n\r\n'
-        header_match = re.search(r'(\$PBExportHeader\$.*?\$PBExportComments\$.*?[\r\n]{1,2})', code, re.DOTALL)
+        new_prototype_block = f'forward{new_declarations}\nend forward\n\n'
+        header_match = re.search(r'(\$PBExportHeader\$.*?\$PBExportComments\$.*?[\n]{1,2})', code, re.DOTALL)
         if header_match:
             insert_pos = header_match.end()
             new_code = code[:insert_pos] + new_prototype_block + code[insert_pos:]
