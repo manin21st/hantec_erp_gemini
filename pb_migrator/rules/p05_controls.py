@@ -38,26 +38,26 @@ def apply(code, **kwargs):
         # 참고: 이 정규식은 중첩된 `type...end type` 구조가 있을 경우 완벽하게 동작하지 않을 수 있습니다.
         # 가장 바깥쪽의 `end type`을 기준으로 매칭하기 때문입니다.
         pattern_main_def = re.compile(r'type\s+%s\s+from\s+\w+.*?end type' % name, re.DOTALL | re.IGNORECASE)
-        modified_code = pattern_main_def.sub(''''', modified_code)
+        modified_code = pattern_main_def.sub('', modified_code)
         
         # 3. `forward prototypes` 내의 선언을 삭제합니다. (메인 정의와 유사한 형태)
         pattern_forward_def = re.compile(r'type\s+%s\s+from\s+\w+\s+within\s+\w+.*?end type' % name, re.DOTALL | re.IGNORECASE)
-        modified_code = pattern_forward_def.sub(''''', modified_code)
+        modified_code = pattern_forward_def.sub('', modified_code)
 
         # 4. 인스턴스 변수 선언 (`[control_type] [control_name]`)을 삭제합니다.
         # PowerBuilder에서는 컨트롤을 스크립트에서 직접 참조하기 위해 인스턴스 변수로 선언하는 경우가 있습니다.
         pattern_ivar = re.compile(r'^\s*\w+\s+%s\s*?$\r?\n' % name, re.MULTILINE | re.IGNORECASE)
-        modified_code = pattern_ivar.sub(''''', modified_code)
+        modified_code = pattern_ivar.sub('', modified_code)
 
         # 5. create 이벤트 내의 생성 관련 코드를 삭제합니다.
         pattern_create1 = re.compile(r'^\s*this\.Control\[\w+\]\s*=\s*this\.%s\s*?$\r?\n' % name, re.MULTILINE | re.IGNORECASE)
         pattern_create2 = re.compile(r'^\s*this\.%s\s*=\s*create\s+%s\s*?$\r?\n' % (name, name), re.MULTILINE | re.IGNORECASE)
-        modified_code = pattern_create1.sub(''''', modified_code)
-        modified_code = pattern_create2.sub(''''', modified_code)
+        modified_code = pattern_create1.sub('', modified_code)
+        modified_code = pattern_create2.sub('', modified_code)
 
         # 6. destroy 이벤트 내의 파괴 관련 코드를 삭제합니다.
         pattern_destroy = re.compile(r'^\s*destroy\s*\(\s*this\.%s\s*\)\s*?$\r?\n' % name, re.MULTILINE | re.IGNORECASE)
-        modified_code = pattern_destroy.sub(''''', modified_code)
+        modified_code = pattern_destroy.sub('', modified_code)
 
         removed_controls.append(name)
 

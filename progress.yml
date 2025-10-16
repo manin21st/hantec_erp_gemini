@@ -150,3 +150,12 @@ detailed_log:
     - `gemini.md`, `specification.md` 등 관련 문서를 최신 상태로 업데이트.
     - 모든 변경 사항을 GitHub 원격 저장소에 커밋 및 푸시 완료.
   worker: "Gemini"
+- timestamp: '2025-10-16 19:00:00'
+  status: "완료"
+  target: "P-03, P-08 규칙 로직 수정 및 최종 버그 해결"
+  description: |
+    - PowerBuilder 임포트 시 발생하던 C0031 Syntax Error의 근본 원인을 분석.
+    - 비정상적인 소스 파일 구조에 대응하지 못하고 `forward` 블록을 손상시키던 P-03, P-08 규칙의 로직 결함을 발견.
+    - 해당 규칙들이 `forward` 블록 전체를 재작성하는 대신, 필요한 선언만 안전하게 삽입하도록 수정하여 문제 해결.
+    - 내부적으로 `\n`을 사용하고 최종 저장 시점에만 `\r\n`으로 변환하는 방식으로 안정성 확보.
+  worker: "Gemini"

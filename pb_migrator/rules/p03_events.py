@@ -19,19 +19,11 @@ def apply(code, **kwargs):
     if not defined_events:
         return code, {"rule": "P-03", "status": "해당 없음", "details": "스크립트에서 사용자 이벤트(ue_*)를 찾지 못했습니다."}
 
-    # 2. `forward prototypes` 또는 `forward` 섹션을 찾습니다.
-    proto_match = re.search(r'(forward prototypes)(.*?)(end prototypes)', code, re.DOTALL | re.IGNORECASE)
-    forward_match = None
-    if not proto_match:
-        forward_match = re.search(r'(^forward\n)([\s\S]*?)(^end forward\n)', code, re.MULTILINE | re.IGNORECASE)
-
+    # 2. `forward prototypes` 또는 `forward` 섹션에 이미 선언된 이벤트를 찾습니다.
+    forward_block_match = re.search(r'(^forward\n|forward prototypes)([\s\S]*?)(^end forward\n|end prototypes)', code, re.MULTILINE | re.IGNORECASE)
     declared_events = set()
-    prototypes_content = ""
-    if proto_match:
-        prototypes_content = proto_match.group(2)
-        declared_events = set(re.findall(r'event\s+(ue_\w+)', prototypes_content, re.IGNORECASE))
-    elif forward_match:
-        prototypes_content = forward_match.group(2)
+    if forward_block_match:
+        prototypes_content = forward_block_match.group(2)
         declared_events = set(re.findall(r'event\s+(ue_\w+)', prototypes_content, re.IGNORECASE))
 
     # 3. 정의된 이벤트와 선언된 이벤트를 비교하여, 선언이 누락된 이벤트를 찾습니다.
@@ -40,28 +32,34 @@ def apply(code, **kwargs):
     if not missing_events:
         return code, {"rule": "P-03", "status": "해당 없음", "details": "모든 사용자 이벤트가 이미 선언되어 있습니다."}
 
-    # 4. 누락된 이벤트를 프로토타입 블록에 추가합니다.
+    # 4. 누락된 이벤트를 프로토타입 선언문으로 만듭니다.
     new_declarations = ""
     for event in sorted(list(missing_events)):
-        new_declarations += f'\nevent {event} ( )'
-    
+        new_declarations += f'event {event} ( )\n'
+
     new_code = code
+    
+    # 5. 기존 forward 블록에 삽입하거나, 없으면 새로 생성합니다.
+    # `forward prototypes` 블록이 있으면 그 안에 추가합니다.
+    proto_match = re.search(r'(forward prototypes)', new_code, re.IGNORECASE)
     if proto_match:
-        new_prototype_block = f'forward prototypes{prototypes_content}{new_declarations}\nend prototypes'
-        new_code = code.replace(proto_match.group(0), new_prototype_block)
-    elif forward_match:
-        new_block_content = prototypes_content.rstrip() + new_declarations + '\n'
-        new_prototype_block = f'forward\n{new_block_content}end forward\n'
-        new_code = code.replace(forward_match.group(0), new_prototype_block)
+        # `forward prototypes` 바로 다음 줄에 누락된 선언들을 삽입합니다.
+        new_code = re.sub(r'(forward prototypes)', r'\1\n' + new_declarations.strip(), new_code, count=1, flags=re.IGNORECASE)
     else:
-        # forward 블록이 없으면 새로 생성
-        new_prototype_block = f'forward{new_declarations}\nend forward\n\n'
-        header_match = re.search(r'(\$PBExportHeader\$.*?\$PBExportComments\$.*?[\n]{1,2})', code, re.DOTALL)
-        if header_match:
-            insert_pos = header_match.end()
-            new_code = code[:insert_pos] + new_prototype_block + code[insert_pos:]
+        # `forward` 블록이 있으면 그 안에 추가합니다.
+        forward_match = re.search(r'(^forward\n)', new_code, re.MULTILINE | re.IGNORECASE)
+        if forward_match:
+            # `forward` 바로 다음 줄에 누락된 선언들을 삽입합니다.
+            new_code = re.sub(r'(^forward\n)', r'\1' + new_declarations, new_code, count=1, flags=re.MULTILINE | re.IGNORECASE)
         else:
-            new_code = new_prototype_block + code # 헤더가 없는 경우 맨 앞에 추가
+            # forward 블록이 없으면 새로 생성합니다.
+            new_prototype_block = f'forward\n{new_declarations}end forward\n\n'
+            header_match = re.search(r'(\$PBExportHeader\$.*?\$PBExportComments\$.*?(\n){1,2})', new_code, re.DOTALL)
+            if header_match:
+                insert_pos = header_match.end()
+                new_code = new_code[:insert_pos] + new_prototype_block + new_code[insert_pos:]
+            else:
+                new_code = new_prototype_block + new_code # 헤더가 없는 경우 맨 앞에 추가
 
     report = {
         "rule": "P-03",

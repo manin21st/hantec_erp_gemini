@@ -1,50 +1,49 @@
 $PBExportHeader$w_cic00010.srw
 $PBExportComments$품목별 진척도 등록
-forward
+forward
+event ue_enterkey ( )
+event ue_key ( )
+event ue_pressenter ( )
+event ue_retrieve()
+event ue_update()
+event ue_delete()
+event ue_append()
+event ue_cancel()
+event ue_print()
 global type w_cic00010 from w_inherite
 end type
 type dw_2 from datawindow within w_cic00010
 end type
 
 type dw_1 from datawindow within w_cic00010
-end type
-event ue_retrieve()
-event ue_update()
-event ue_delete()
-event ue_append()
-event ue_cancel()
-event ue_print()
-event ue_enterkey ( )
-event ue_key ( )
-event ue_pressenter ( )
-end forward
+end type
+
+end forward
 
 global type w_cic00010 from w_inherite
 integer height = 3264
 string title = "품목별 진척도 등록"
 dw_2 dw_2
 dw_1 dw_1
-r_head r_head
-r_detail r_detail
 end type
 global w_cic00010 w_cic00010
 
 type variables
 
 end variables
-
-
-event ue_retrieve;if IsValid(p_inq) then p_inq.TriggerEvent(Clicked!)end event
-
-event ue_update;if IsValid(p_mod) then p_mod.TriggerEvent(Clicked!)end event
-
-event ue_delete;if IsValid(p_del) then p_del.TriggerEvent(Clicked!)end event
-
-event ue_append;if IsValid(p_addrow) then p_addrow.TriggerEvent(Clicked!)end event
-
-event ue_cancel;if IsValid(p_can) then p_can.TriggerEvent(Clicked!)end event
-
-event ue_print;if IsValid(p_print) then p_print.TriggerEvent(Clicked!)end event
+
+
+event ue_retrieve;if IsValid(p_inq) then p_inq.TriggerEvent(Clicked!)end event
+
+event ue_update;if IsValid(p_mod) then p_mod.TriggerEvent(Clicked!)end event
+
+event ue_delete;if IsValid(p_del) then p_del.TriggerEvent(Clicked!)end event
+
+event ue_append;if IsValid(p_addrow) then p_addrow.TriggerEvent(Clicked!)end event
+
+event ue_cancel;if IsValid(p_can) then p_can.TriggerEvent(Clicked!)end event
+
+event ue_print;if IsValid(p_print) then p_print.TriggerEvent(Clicked!)end event
 
 on w_cic00010.create
 int iCurrent
@@ -56,8 +55,6 @@ this.Control[iCurrent+1]=this.dw_2
 this.Control[iCurrent+2]=this.gb_4
 this.Control[iCurrent+3]=this.dw_1
 this.Control[iCurrent+4]=this.rr_1
-this.r_head=create r_head
-this.r_detail=create r_detail
 end on
 
 on w_cic00010.destroy
@@ -65,8 +62,6 @@ call super::destroy
 if IsValid(MenuID) then destroy(MenuID)
 destroy(this.dw_2)
 destroy(this.dw_1)
-destroy(this.r_head)
-destroy(this.r_detail)
 end on
 
 event open;call super::open;dw_1.SetTransObject(SQLCA)
@@ -420,31 +415,7 @@ event rbuttondown;IF this.GetColumnName() = "sitnbr" THEN
 END IF	
 end event
 
-type r_head from rectangle within w_cic00010
-long linecolor = 28543105
-integer linethickness = 4
-long fillcolor = 12639424
-integer x = 32
-integer y = 32
-integer width = 4562
-integer height = 308
-end type
 
-type r_detail from rectangle within w_cic00010
-long linecolor = 28543105
-integer linethickness = 4
-long fillcolor = 16777215
-integer x = 32
-integer y = 352
-integer width = 4562
-integer height = 1964
-end type
-
-event resize;r_head.width = this.width - r_head.x - 30
-r_detail.width = this.width - r_detail.x - 30
-r_detail.height = this.height - r_detail.y - 65
-
-end event
 
 event activate;gw_window = this
 
