@@ -1,0 +1,119 @@
+Loading files from: C:\erpman\hantec_erp_gemini\source
+Successfully loaded 2589 files.
+Loading files from: C:\erpman\hantec_erp_gemini\source
+Successfully loaded 2589 files.
+Selected file for preview: C:\erpman\hantec_erp_gemini\source\ac0005\w_kfz07om0_popup.srw
+Selected file for preview: C:\erpman\hantec_erp_gemini\source\ac0005\w_kfz05om0_popup.srw
+Selected file for preview: C:\erpman\hantec_erp_gemini\source\ac0005\w_kfe01om0_popup.srw
+Selected file for preview: C:\erpman\hantec_erp_gemini\source\ac0005\w_kfz01om0_popup_sungub.srw
+Selected file for preview: C:\erpman\hantec_erp_gemini\source\ac0005\w_cib01m_popup.srw
+Selected file for preview: C:\erpman\hantec_erp_gemini\source\ac0005\w_cib01m_popup.srw
+Selected file for preview: C:\erpman\hantec_erp_gemini\source\ac0005\w_kfz01om0_popup_cost.srw
+Selected file for preview: C:\erpman\hantec_erp_gemini\source\ac0005\w_kfm05ot0_popup.srw
+Selected file for preview: C:\erpman\hantec_erp_gemini\source\ac0005\w_kfz01om0_popup_sungub.srw
+Starting batch process for 9 files.
+Applying selected rules: P-01, P-02, P-03, P-04, P-05, P-07, P-08
+
+--- Batch Process Summary ---
+
+--- Transformation Report for w_pdm_01010.srw ---
+Rule: P-05, Status: 적용됨, Details: 5개의 장식용 컨트롤을 삭제했습니다: gb_10, gb_button1, gb_button2, rr_1, rr_2
+Rule: P-07, Status: 적용됨, Details: 삭제할 장식용 컨트롤을 찾지 못했습니다. r_head, r_detail 컨트롤 추가. 재배치된 컨트롤: .
+Rule: P-02, Status: 적용됨, Details: 7개의 상속된 컨트롤을 화면 밖으로 이동시켰습니다: dw_insert, p_delrow, p_addrow, p_search, p_ins, p_inq, p_del
+Rule: P-08, Status: 적용됨, Details: 6개의 표준 MDI 이벤트를 추가했습니다: ue_retrieve, ue_update, ue_delete, ue_append, ue_cancel, ue_print
+Rule: P-03, Status: 적용됨, Details: 1개의 누락된 이벤트 프로토타입을 추가했습니다: ue_key
+Rule: P-04, Status: 적용됨, Details: 표준 이벤트를 추가했습니다: resize, activate
+Rule: P-01, Status: 저장 시 처리, Details: 파일 저장 시점에 인코딩은 UTF-16 LE, 줄바꿈은 CRLF로 자동 변환됩니다.
+--- End of Report ---
+Successfully saved file to: C:\erpman\hantec_erp_gemini\target\ast_e010\w_pdm_01010.srw
+
+--- Transformation Report for w_pdm_01040.srw ---
+Rule: P-05, Status: 적용됨, Details: 18개의 장식용 컨트롤을 삭제했습니다: rr_1, rr_11, rr_12, rr_14, rr_15, rr_16, rr_17, rr_18, rr_19, rr_2, rr_20, rr_21, rr_22, rr_3, rr_4, rr_5, rr_6, rr_7
+Rule: P-07, Status: 적용됨, Details: 삭제할 장식용 컨트롤을 찾지 못했습니다. r_head, r_detail 컨트롤 추가. 재배치된 컨트롤: .
+Rule: P-02, Status: 해당 없음, Details: 'visible = false' 속성을 가진 상속 컨트롤을 찾지 못했습니다.
+Rule: P-08, Status: 적용됨, Details: 4개의 표준 MDI 이벤트를 추가했습니다: ue_retrieve, ue_update, ue_delete, ue_cancel
+Rule: P-03, Status: 적용됨, Details: 5개의 누락된 이벤트 프로토타입을 추가했습니다: ue_key, ue_lbuttondown, ue_lbuttonup, ue_presenter, ue_pressenter
+Rule: P-04, Status: 적용됨, Details: 표준 이벤트를 추가했습니다: resize, activate
+Rule: P-01, Status: 저장 시 처리, Details: 파일 저장 시점에 인코딩은 UTF-16 LE, 줄바꿈은 CRLF로 자동 변환됩니다.
+--- End of Report ---
+Successfully saved file to: C:\erpman\hantec_erp_gemini\target\ast_e010\w_pdm_01040.srw
+
+--- Transformation Report for w_pdm_11510.srw ---
+Rule: P-05, Status: 적용됨, Details: 2개의 장식용 컨트롤을 삭제했습니다: gb_10, rr_2
+Rule: P-07, Status: 적용됨, Details: 삭제할 장식용 컨트롤을 찾지 못했습니다. r_head, r_detail 컨트롤 추가. 재배치된 컨트롤: .
+Rule: P-02, Status: 해당 없음, Details: 'visible = false' 속성을 가진 상속 컨트롤을 찾지 못했습니다.
+Rule: P-08, Status: 건너뜀, Details: 이벤트 스크립트를 추가할 위치를 찾지 못했습니다.
+Rule: P-03, Status: 해당 없음, Details: 스크립트에서 사용자 이벤트(ue_*)를 찾지 못했습니다.
+Rule: P-04, Status: 적용됨, Details: 표준 이벤트를 추가했습니다: resize, activate
+Rule: P-01, Status: 저장 시 처리, Details: 파일 저장 시점에 인코딩은 UTF-16 LE, 줄바꿈은 CRLF로 자동 변환됩니다.
+--- End of Report ---
+Successfully saved file to: C:\erpman\hantec_erp_gemini\target\ast_e010\w_pdm_11510.srw
+
+--- Transformation Report for w_pdm_11710.srw ---
+Rule: P-05, Status: 적용됨, Details: 5개의 장식용 컨트롤을 삭제했습니다: gb_1, gb_2, gb_3, gb_4, gb_5
+Rule: P-07, Status: 적용됨, Details: 삭제할 장식용 컨트롤을 찾지 못했습니다. r_head, r_detail 컨트롤 추가. 재배치된 컨트롤: .
+Rule: P-02, Status: 해당 없음, Details: 'visible = false' 속성을 가진 상속 컨트롤을 찾지 못했습니다.
+Rule: P-08, Status: 적용됨, Details: 2개의 표준 MDI 이벤트를 추가했습니다: ue_print, ue_excel
+Rule: P-03, Status: 적용됨, Details: 3개의 누락된 이벤트 프로토타입을 추가했습니다: ue_lbuttondown, ue_lbuttonup, ue_open
+Rule: P-04, Status: 적용됨, Details: 표준 이벤트를 추가했습니다: resize, activate
+Rule: P-01, Status: 저장 시 처리, Details: 파일 저장 시점에 인코딩은 UTF-16 LE, 줄바꿈은 CRLF로 자동 변환됩니다.
+--- End of Report ---
+Successfully saved file to: C:\erpman\hantec_erp_gemini\target\ast_e030\w_pdm_11710.srw
+
+--- Transformation Report for w_pdm_01390.srw ---
+Rule: P-05, Status: 적용됨, Details: 2개의 장식용 컨트롤을 삭제했습니다: gb_button1, gb_button2
+Rule: P-07, Status: 적용됨, Details: 삭제할 장식용 컨트롤을 찾지 못했습니다. r_head, r_detail 컨트롤 추가. 재배치된 컨트롤: .
+Rule: P-02, Status: 적용됨, Details: 7개의 상속된 컨트롤을 화면 밖으로 이동시켰습니다: dw_insert, p_delrow, p_addrow, p_search, p_ins, p_exit, p_inq
+Rule: P-08, Status: 건너뜀, Details: 이벤트 스크립트를 추가할 위치를 찾지 못했습니다.
+Rule: P-03, Status: 해당 없음, Details: 스크립트에서 사용자 이벤트(ue_*)를 찾지 못했습니다.
+Rule: P-04, Status: 적용됨, Details: 표준 이벤트를 추가했습니다: resize, activate
+Rule: P-01, Status: 저장 시 처리, Details: 파일 저장 시점에 인코딩은 UTF-16 LE, 줄바꿈은 CRLF로 자동 변환됩니다.
+--- End of Report ---
+Successfully saved file to: C:\erpman\hantec_erp_gemini\target\ast_e060\w_pdm_01390.srw
+
+--- Transformation Report for w_sal_05033.srw ---
+Rule: P-05, Status: 적용됨, Details: 4개의 장식용 컨트롤을 삭제했습니다: gb_button1, gb_button2, rr_1, rr_2
+Rule: P-07, Status: 적용됨, Details: 삭제할 장식용 컨트롤을 찾지 못했습니다. r_head, r_detail 컨트롤 추가. 재배치된 컨트롤: .
+Rule: P-02, Status: 적용됨, Details: 7개의 상속된 컨트롤을 화면 밖으로 이동시켰습니다: dw_insert, p_delrow, p_addrow, p_search, p_exit, p_mod, cb_exit
+Rule: P-08, Status: 적용됨, Details: 6개의 표준 MDI 이벤트를 추가했습니다: ue_retrieve, ue_update, ue_delete, ue_append, ue_cancel, ue_print
+Rule: P-03, Status: 적용됨, Details: 2개의 누락된 이벤트 프로토타입을 추가했습니다: ue_open, ue_pressenter
+Rule: P-04, Status: 적용됨, Details: 표준 이벤트를 추가했습니다: resize, activate
+Rule: P-01, Status: 저장 시 처리, Details: 파일 저장 시점에 인코딩은 UTF-16 LE, 줄바꿈은 CRLF로 자동 변환됩니다.
+--- End of Report ---
+Successfully saved file to: C:\erpman\hantec_erp_gemini\target\bsa_e040\w_sal_05033.srw
+
+--- Transformation Report for w_pdt_06043.srw ---
+Rule: P-05, Status: 적용됨, Details: 4개의 장식용 컨트롤을 삭제했습니다: gb_5, gb_button1, gb_button2, rr_1
+Rule: P-07, Status: 적용됨, Details: 삭제할 장식용 컨트롤을 찾지 못했습니다. r_head, r_detail 컨트롤 추가. 재배치된 컨트롤: .
+Rule: P-02, Status: 적용됨, Details: 1개의 상속된 컨트롤을 화면 밖으로 이동시켰습니다: dw_insert
+Rule: P-08, Status: 건너뜀, Details: 이벤트 스크립트를 추가할 위치를 찾지 못했습니다.
+Rule: P-03, Status: 적용됨, Details: 2개의 누락된 이벤트 프로토타입을 추가했습니다: ue_key, ue_pressenter
+Rule: P-04, Status: 적용됨, Details: 표준 이벤트를 추가했습니다: resize, activate
+Rule: P-01, Status: 저장 시 처리, Details: 파일 저장 시점에 인코딩은 UTF-16 LE, 줄바꿈은 CRLF로 자동 변환됩니다.
+--- End of Report ---
+Successfully saved file to: C:\erpman\hantec_erp_gemini\target\dpd_e051\w_pdt_06043.srw
+
+--- Transformation Report for w_pdt_06564.srw ---
+Rule: P-05, Status: 적용됨, Details: 1개의 장식용 컨트롤을 삭제했습니다: rr_1
+Rule: P-07, Status: 적용됨, Details: 삭제할 장식용 컨트롤을 찾지 못했습니다. r_head, r_detail 컨트롤 추가. 재배치된 컨트롤: .
+Rule: P-02, Status: 해당 없음, Details: 'visible = false' 속성을 가진 상속 컨트롤을 찾지 못했습니다.
+Rule: P-08, Status: 건너뜀, Details: 이벤트 스크립트를 추가할 위치를 찾지 못했습니다.
+Rule: P-03, Status: 해당 없음, Details: 스크립트에서 사용자 이벤트(ue_*)를 찾지 못했습니다.
+Rule: P-04, Status: 적용됨, Details: 표준 이벤트를 추가했습니다: resize, activate
+Rule: P-01, Status: 저장 시 처리, Details: 파일 저장 시점에 인코딩은 UTF-16 LE, 줄바꿈은 CRLF로 자동 변환됩니다.
+--- End of Report ---
+Successfully saved file to: C:\erpman\hantec_erp_gemini\target\dpd_e051\w_pdt_06564.srw
+
+--- Transformation Report for w_pdt_02860.srw ---
+Rule: P-05, Status: 적용됨, Details: 1개의 장식용 컨트롤을 삭제했습니다: rr_1
+Rule: P-07, Status: 적용됨, Details: 삭제할 장식용 컨트롤을 찾지 못했습니다. r_head, r_detail 컨트롤 추가. 재배치된 컨트롤: .
+Rule: P-02, Status: 해당 없음, Details: 'visible = false' 속성을 가진 상속 컨트롤을 찾지 못했습니다.
+Rule: P-08, Status: 건너뜀, Details: 이벤트 스크립트를 추가할 위치를 찾지 못했습니다.
+Rule: P-03, Status: 해당 없음, Details: 스크립트에서 사용자 이벤트(ue_*)를 찾지 못했습니다.
+Rule: P-04, Status: 적용됨, Details: 표준 이벤트를 추가했습니다: resize, activate
+Rule: P-01, Status: 저장 시 처리, Details: 파일 저장 시점에 인코딩은 UTF-16 LE, 줄바꿈은 CRLF로 자동 변환됩니다.
+--- End of Report ---
+Successfully saved file to: C:\erpman\hantec_erp_gemini\target\dpd_p030\w_pdt_02860.srw
+
+--- End of Batch Process Summary ---
+

@@ -53,12 +53,14 @@ class MainApplication(tk.Frame):
         
         self.engine = MigrationEngine()
         self.last_reports = []
+        self.last_selected_path = None
 
         self.create_menu()
         self.create_statusbar()
         self.create_widgets()
         
         self.setup_diff_highlighting()
+        self.load_worklist()
         self.load_worklist()
 
     def create_menu(self):
@@ -96,6 +98,9 @@ class MainApplication(tk.Frame):
         settings_main_pane.add(file_list_frame, weight=1)
         self.file_listbox, _, _ = self.create_scrolled_listbox(file_list_frame)
         self.file_listbox.bind('<<ListboxSelect>>', self.on_file_select)
+        self.file_listbox.bind('<Button-1>', self._on_listbox_click)
+        self.parent.bind('<Escape>', self._on_listbox_escape)
+        self.file_listbox.bind('<Escape>', self._on_listbox_escape)
 
         controls_log_pane = ttk.PanedWindow(settings_main_pane, orient=tk.VERTICAL)
         settings_main_pane.add(controls_log_pane, weight=3)
@@ -113,7 +118,7 @@ class MainApplication(tk.Frame):
         
         self.rules_vars = {}
         rule_descriptions = {
-            "P-01": "Encoding & Line Endings", "P-02": "Inherited Controls",
+            "P-02": "Inherited Controls",
             "P-03": "User Event Prototypes", "P-04": "Standard Events",
             "P-05": "Remove Decorative Controls", "P-07": "UI/UX Modernization",
             "P-08": "Standard MDI Events"
@@ -259,28 +264,61 @@ class MainApplication(tk.Frame):
     def on_file_select(self, event):
         selected_indices = self.file_listbox.curselection()
         if not selected_indices:
+            self._update_active_file_ui(None)
             return
 
-        self.notebook.select(self.settings_tab)
-        selected_path = self.file_listbox.get(selected_indices[0])
-        self.status_var.set(f"Selected: {os.path.basename(selected_path)}")
-        self.log(f"Selected file: {selected_path}")
-
         try:
-            with open(selected_path, 'r', encoding='cp949') as f:
-                file_content = f.read()
-            
-            self.original_text.delete('1.0', tk.END)
-            self.original_text.insert('1.0', file_content)
-            self.migrated_text.delete('1.0', tk.END)
-            self.log("Successfully loaded and displayed original file content.")
+            anchor_index = self.file_listbox.index(tk.ANCHOR)
+            active_path = self.file_listbox.get(anchor_index)
+            self._update_active_file_ui(active_path)
+        except tk.TclError:
+            # Fallback for selections without a clear anchor (e.g., programmatic)
+            if selected_indices:
+                active_path = self.file_listbox.get(selected_indices[0])
+                self._update_active_file_ui(active_path)
+            else:
+                self._update_active_file_ui(None)
 
-        except FileNotFoundError:
-            self.log(f"Error: Could not find file {selected_path}")
-            messagebox.showerror("Error", f"Could not find the selected file:\n{selected_path}")
-        except Exception as e:
-            self.log(f"Error reading file with CP949 encoding: {e}")
-            messagebox.showerror("Error", f"An error occurred while reading the file:\n{e}")
+    def _on_listbox_click(self, event):
+        # This method implements the safer click-toggle behavior.
+        if not (event.state & 0x0001 or event.state & 0x0004): # No Shift or Ctrl
+            clicked_index = self.file_listbox.nearest(event.y)
+            if self.file_listbox.selection_includes(clicked_index):
+                self.file_listbox.selection_clear(clicked_index)
+            else:
+                self.file_listbox.selection_set(clicked_index)
+            
+            # Directly update UI instead of generating an event
+            active_path = self.file_listbox.get(clicked_index)
+            self._update_active_file_ui(active_path)
+            return "break" # Prevents the default binding from firing
+
+    def _on_listbox_escape(self, event):
+        # Clears the entire selection when the Escape key is pressed
+        self.file_listbox.selection_clear(0, tk.END)
+        self._update_active_file_ui(None)
+        return "break" # Prevents any other bindings from firing
+
+    def _update_active_file_ui(self, file_path):
+        """Helper function to update all UI elements based on a new active file."""
+        self.last_selected_path = file_path
+        
+        if file_path:
+            self.log(f"Active file set to: {os.path.basename(self.last_selected_path)}")
+            try:
+                with open(self.last_selected_path, 'r', encoding='cp949') as f:
+                    file_content = f.read()
+                self.original_text.delete('1.0', tk.END)
+                self.original_text.insert('1.0', file_content)
+                self.migrated_text.delete('1.0', tk.END)
+            except Exception as e:
+                self.log(f"Error reading file for preview: {e}")
+                self.original_text.delete('1.0', tk.END)
+                self.migrated_text.delete('1.0', tk.END)
+        else:
+            self.log("Selection cleared.")
+            self.original_text.delete('1.0', tk.END)
+            self.migrated_text.delete('1.0', tk.END)
 
     def on_tab_changed(self, event):
         selected_tab_index = self.notebook.index(self.notebook.select())
@@ -288,17 +326,24 @@ class MainApplication(tk.Frame):
             self.preview_and_save_single_file()
 
     def preview_and_save_single_file(self):
-        selected_indices = self.file_listbox.curselection()
-        if not selected_indices:
+        if not self.last_selected_path:
+            self.log("No active file selected for comparison.")
+            # Clear comparison view if no file is active
+            self.original_text.delete('1.0', tk.END)
+            self.migrated_text.delete('1.0', tk.END)
             return
 
-        source_path = self.file_listbox.get(selected_indices[0])
-        source_code = self.original_text.get("1.0", tk.END)
-        if not source_code.strip():
-            self.log("No source code to preview.")
+        source_path = self.last_selected_path
+        self.log(f"Comparing active file: {os.path.basename(source_path)}")
+
+        try:
+            with open(source_path, 'r', encoding='cp949') as f:
+                source_code = f.read()
+        except Exception as e:
+            self.log(f"Error reading file for comparison: {e}")
+            messagebox.showerror("Error", f"Could not read file: {source_path}\n{e}")
             return
 
-        self.log(f"Processing and auto-saving: {os.path.basename(source_path)}")
         selected_rules = [rule_id for rule_id, var in self.rules_vars.items() if var.get()]
         self.log(f"Applying selected rules: {', '.join(selected_rules)}")
 
@@ -317,8 +362,8 @@ class MainApplication(tk.Frame):
         os.makedirs(os.path.dirname(target_path), exist_ok=True)
 
         try:
-            with open(target_path, 'wb') as f:
-                f.write(transformed_code.encode('utf-16-le'))
+            with open(target_path, 'w', encoding='cp949', newline='\r\n') as f:
+                f.write(transformed_code)
             self.log(f"Successfully auto-saved file to: {target_path}")
             self.status_var.set(f"Saved: {os.path.basename(target_path)}")
         except Exception as e:
@@ -399,8 +444,8 @@ class MainApplication(tk.Frame):
                         target_path = os.path.join(self.project_root, 'target', relative_path)
                         os.makedirs(os.path.dirname(target_path), exist_ok=True)
 
-                        with open(target_path, 'wb') as f:
-                            f.write(transformed_code.encode('utf-16-le'))
+                        with open(target_path, 'w', encoding='cp949', newline='\r\n') as f:
+                            f.write(transformed_code)
                         
                         log_entry.append(f"Successfully saved file to: {target_path}")
                         temp_log_file.write("\n".join(log_entry) + "\n")

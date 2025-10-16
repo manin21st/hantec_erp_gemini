@@ -29,14 +29,12 @@ class MigrationEngine:
             "P-08", # 표준 MDI 이벤트 추가
             "P-03", # 이벤트 프로토타입 선언 추가
             "P-04", # resize/activate 등 표준 이벤트 스크립트 추가
-            "P-01", # 인코딩 처리 (개념적으로, 파일 저장 시점에 적용됨)
-            # P-06 (깨진 한글 수정)은 파일을 CP949로 읽는 과정에서 이미 처리되므로, 엔진 규칙에는 포함되지 않습니다.
+            # P-01, P-06은 파일 I/O 시점에 처리되므로 엔진 규칙에 포함되지 않습니다.
         ]
 
         # 규칙 ID와 해당 규칙을 구현한 파이썬 모듈을 매핑하는 딕셔너리입니다.
         # 이를 통해 규칙을 동적으로 임포트하여 적용할 수 있습니다.
         self.rule_module_map = {
-            "P-01": ".p01_encoding",
             "P-02": ".p02_inheritance",
             "P-03": ".p03_events",
             "P-04": ".p04_std_events",
@@ -58,7 +56,17 @@ class MigrationEngine:
             tuple: 변환된 소스 코드(str)와 실행 결과 리포트 리스트(list of dict)를 담은 튜플을 반환합니다.
         """
         reports = []
-        transformed_code = code
+        
+        # 헤더와 본문 분리
+        lines = code.splitlines(True)
+        if lines and lines[0].startswith('$PBExportHeader'):
+            header = lines[0]
+            body = "".join(lines[1:])
+        else:
+            header = ""
+            body = code
+
+        transformed_body = body
 
         # 정의된 순서(self.rule_order)에 따라 규칙을 하나씩 적용합니다.
         for rule_id in self.rule_order:
@@ -70,11 +78,14 @@ class MigrationEngine:
                     # importlib를 사용하여 모듈을 동적으로 임포트합니다.
                     rule_module = importlib.import_module(module_name, package='pb_migrator.rules')
                     # 해당 모듈의 apply 함수를 호출하여 변환을 수행합니다.
-                    transformed_code, report = rule_module.apply(transformed_code, **kwargs)
+                    transformed_body, report = rule_module.apply(transformed_body, **kwargs)
                     reports.append(report)
                 except ImportError:
                     reports.append({"rule": rule_id, "status": "Error", "details": f"모듈을 임포트할 수 없습니다: {module_name}."})
                 except Exception as e:
                     reports.append({"rule": rule_id, "status": "Error", "details": f"규칙 적용 중 오류 발생: {e}"})
+        
+        # 헤더와 변환된 본문을 다시 결합
+        transformed_code = header + transformed_body
         
         return transformed_code, reports

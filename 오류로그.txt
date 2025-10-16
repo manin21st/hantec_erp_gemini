@@ -1,0 +1,12 @@
+---------------------------
+Library
+---------------------------
+Import failed. Possible causes:
+ 1 - Invalid import file name
+ 2 - Invalid destination library name
+ 3 - Regeneration of source failed
+ 4 - Import file missing export header
+Continue?
+---------------------------
+예(Y)   아니요(N)   
+---------------------------

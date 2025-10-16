@@ -81,6 +81,7 @@ detailed_log:
   status: "예정"
   target: "pb_migrator/rules/p07_gui_modernization.py"
   description: "P-07 규칙 고도화: 컨트롤 재배치 로직 추가 개선 (예: 특정 컨트롤 그룹화, 동적 크기 조정)."
+  checklist_result: "N/A"
   worker: "Gemini"
 - timestamp: '2025-10-02 15:00:00'
   status: "완료"
@@ -107,6 +108,7 @@ detailed_log:
   status: "예정"
   target: "pb_migrator/rules/p07_gui_modernization.py"
   description: "P-07 규칙 고도화: 컨트롤 재배치 로직 추가 개선 (예: 특정 컨트롤 그룹화, 동적 크기 조정)."
+  checklist_result: "N/A"
   worker: "Gemini"
 - timestamp: '2025-10-03 16:00:00'
   status: "완료"
@@ -134,4 +136,9 @@ detailed_log:
   status: "완료"
   target: "PBMigrator 안정화 및 문서 최신화"
   description: "PBMigrator.exe 실행 오류의 근본 원인(모듈 누락, BOM 인코딩)을 진단하고 해결. `PBMigrator.spec` 및 `gui.py`를 수정하여 안정적인 빌드 확보. `gemini.md`에 '클린 빌드' 등 최신화된 빌드 절차를 반영하여 문서 현행화 완료."
+  worker: "Gemini"
+- timestamp: '2025-10-16 17:00:00'
+  status: "완료"
+  target: "P-01 인코딩 처리 (CP949)"
+  description: "PowerBuilder 임포트 실패 문제의 원인이 UTF-16 LE 인코딩이 아닌 CP949 인코딩이었음을 확인하고, gui.py의 파일 저장 로직을 CP949로 변경하여 해결. `gemini.md` 및 `specification.md`의 P-01 규칙 명세 업데이트."
   worker: "Gemini"
