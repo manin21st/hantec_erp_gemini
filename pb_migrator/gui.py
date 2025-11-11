@@ -61,7 +61,6 @@ class MainApplication(tk.Frame):
         
         self.setup_diff_highlighting()
         self.load_worklist()
-        self.load_worklist()
 
     def create_menu(self):
         """상단 메뉴 바를 생성합니다."""
@@ -118,10 +117,7 @@ class MainApplication(tk.Frame):
         
         self.rules_vars = {}
         rule_descriptions = {
-            "P-02": "Inherited Controls",
-            "P-03": "User Event Prototypes", "P-04": "Standard Events",
-            "P-05": "Remove Decorative Controls", "P-07": "UI/UX Modernization",
-            "P-08": "Standard MDI Events"
+            "P-01": "상속 재정의 (Inheritance Override)"
         }
         rule_ids = sorted(rule_descriptions.keys())
         for rule_id in rule_ids:
@@ -307,7 +303,7 @@ class MainApplication(tk.Frame):
             self.log(f"Active file set to: {os.path.basename(self.last_selected_path)}")
             try:
                 with open(self.last_selected_path, 'r', encoding='cp949') as f:
-                    file_content = f.read()
+                    file_content = f.read().replace('\r\n', '\n').replace('\r', '\n')
                 self.original_text.delete('1.0', tk.END)
                 self.original_text.insert('1.0', file_content)
                 self.migrated_text.delete('1.0', tk.END)
@@ -338,7 +334,7 @@ class MainApplication(tk.Frame):
 
         try:
             with open(source_path, 'r', encoding='cp949') as f:
-                source_code = f.read()
+                source_code = f.read().replace('\r\n', '\n').replace('\r', '\n')
         except Exception as e:
             self.log(f"Error reading file for comparison: {e}")
             messagebox.showerror("Error", f"Could not read file: {source_path}\n{e}")
@@ -347,7 +343,12 @@ class MainApplication(tk.Frame):
         selected_rules = [rule_id for rule_id, var in self.rules_vars.items() if var.get()]
         self.log(f"Applying selected rules: {', '.join(selected_rules)}")
 
-        transformed_code, reports = self.engine.apply_rules(source_code, selected_rules)
+        reference_folder_path = os.path.join(self.project_root, 'target', '_reference')
+        transformed_code, reports = self.engine.apply_rules(
+            source_code, 
+            selected_rules,
+            reference_folder_path
+        )
         self.last_reports = reports
 
         self.highlight_diff(source_code, transformed_code)
@@ -431,9 +432,14 @@ class MainApplication(tk.Frame):
 
                     try:
                         with open(source_path, 'r', encoding='cp949', errors='ignore') as f:
-                            source_code = f.read()
+                            source_code = f.read().replace('\r\n', '\n').replace('\r', '\n')
 
-                        transformed_code, reports = self.engine.apply_rules(source_code, selected_rules)
+                        reference_folder_path = os.path.join(self.project_root, 'target', '_reference')
+                        transformed_code, reports = self.engine.apply_rules(
+                            source_code, 
+                            selected_rules,
+                            reference_folder_path
+                        )
                         
                         log_entry = [f"\n--- Transformation Report for {filename} ---"]
                         for report in reports:

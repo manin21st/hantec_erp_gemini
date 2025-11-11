@@ -43,109 +43,19 @@
 
 ## 3. 마이그레이션 최종 패턴
 
-### 3.1. [Level 0] 파일 형식 (Physical Layer)
-- **P-01: 소스 파일 인코딩 처리 (CRITICAL)**
-    - **원본 인코딩**: `source` 폴더의 원본 `.srw` 파일들은 `CP949` (또는 `EUC-KR`) 인코딩으로 작성되어 있습니다.
-    - **읽기/쓰기 처리**: `PBMigrator`는 모든 소스 파일을 `CP949` 인코딩으로 읽고 씁니다. 이 방식은 한글 깨짐(구 P-06)과 PowerBuilder 10.5 임포트 문제를 모두 해결하므로, 별도의 인코딩 변환 규칙은 존재하지 않습니다.
-    - **줄바꿈 처리**: 변환된 `target` 폴더의 모든 `.srw` 파일은 `CRLF` (`\r\n`) 줄바꿈으로 저장됩니다.
-    - **[중요]** 이 모든 처리는 `PBMigrator`의 파일 입출력 로직에 내장되어 있으며, 사용자가 선택하는 별도의 규칙이 아닙니다.
+> **현재 모든 마이그레이션 로직은 단일 규칙 `P-01`로 통합 및 표준화되었습니다.**
 
-### 3.2. [Level 1] 윈도우 선언부 (Structural Layer)
-- **P-02: 상속 컨트롤 재정의 (CRITICAL)**
-    - 부모 윈도우(`w_inherite`)로부터 상속받은 컨트롤의 속성을 변경(예: 숨기기)할 때는 `type...end type` 블록만 사용합니다.
-    - **숨김 처리**: `visible = false` 속성은 오류를 유발하므로 **사용하지 않습니다.** 대신 `x`, `y` 좌표를 윈도우 화면 밖의 큰 값으로 지정하여 이동시킵니다. 이는 **P-08**의 MDI 표준 이벤트가 기존 컨트롤의 로직을 재사용하기 때문입니다.
-    - **중복 선언 금지**: 상속받은 컨트롤은 이미 윈도우에 존재하는 것이므로, 변수 선언부에서 다시 선언(`p_mod p_mod`)하거나 `create`/`destroy` 이벤트에서 생성/삭제해서는 **절대 안 됩니다.** (C0088: Duplicate property name 오류 발생)
-
-- **P-03: 사용자 이벤트 프로토타입 선언**
-    - 윈도우에서 사용하는 모든 사용자 정의 이벤트(예: `ue_query`, `ue_add`)는 `forward prototypes` 섹션에 명시적으로 선언해야 합니다.
-    - **(오류 원인)**: 선언이 누락되면 컴파일 시 `Unknown function name` 오류가 발생합니다.
-
-- **P-04: 표준 이벤트 스크립트 추가 (확장)**
-    - **`resize` 이벤트**: **P-07**에 따라 새로 추가된 `Rectangle` 레이아웃 컨트롤(`r_head`, `r_detail` 등)에 맞춰 내부 컨트롤들의 크기와 위치를 동적으로 재배치하는 표준 스크립트를 작성합니다.
-    - **`activate` 이벤트**: `w_inherite`를 상속받는 윈도우의 경우, `activate` 이벤트에서 MDI 공통 툴바의 버튼 상태(활성/비활성)를 제어하는 표준 스크립트를 작성합니다.
-
-### 3.3. [Level 2] 컨트롤 및 스크립트 (Content Layer)
-- **P-05: 불필요한 장식용 컨트롤 삭제**
-    - 미적 용도로만 사용되는 레거시 그래픽 컨트롤(RoundRectangle, Line, GroupBox 등)은 삭제합니다.
-    - 대상: `rr_*` (RoundRectangle), `ln_*` (Line), `gb_*` (GroupBox) 등.
-    - **주의**: 이 컨트롤들은 **P-07**의 새로운 `Rectangle` 기반 레이아웃으로 대체됩니다.
-
-- **P-09: `GetFocus()` 타입 안전성 확보 (CRITICAL)**
-    - **(문제점)**: `GetFocus()` 함수를 사용하는 스크립트에서 반환된 `GraphicObject`가 특정 컨트롤 타입(예: DataWindow)일 것이라고 가정하고 후속 처리를 하는 경우가 많습니다. 이는 런타임 시점에 실제 포커스된 컨트롤 타입과 불일치하여 오류를 발생시킬 수 있습니다.
-    - **(해결책)**: `GetFocus()`가 반환한 객체의 속성이나 함수에 접근하기 전, `TypeOf()` 함수를 사용하여 객체의 타입을 반드시 확인합니다. 타입이 일치하지 않을 경우, 오류가 발생하지 않도록 분기 처리(예: `return`)를 추가하여 코드의 안정성을 높입니다.
-    - **(코드 예시)**
-        ```powerbuilder
-        // AS-IS: 포커스된 객체가 DataWindow가 아닐 경우 에러 발생
-        GraphicObject lo_obj
-        lo_obj = GetFocus()
-        lo_obj.AcceptText()
-
-        // TO-BE: TypeOf()로 타입을 확인하여 런타임 오류 방지
-        GraphicObject lo_obj
-        lo_obj = GetFocus()
-        if TypeOf(lo_obj) = DataWindow! then
-            lo_obj.AcceptText()
-        end if
-        ```
-
-- **P-10: 레거시 캘린더 컨트롤 교체 (CRITICAL)**
-    - **(문제점)**: 일부 레거시 윈도우에서 `u_pb_cal`이라는 사용자 정의 객체를 사용하여 날짜 선택(캘린더) 버튼을 구현했습니다. 이 컨트롤은 새로운 UI 디자인과 맞지 않고, 기능적으로도 개선이 필요합니다.
-    - **(해결책)**: `u_pb_cal` 컨트롤을 새로운 표준 컨트롤인 `u_pic_cal`으로 교체합니다. `u_pic_cal`은 `Picture` 컨트롤 기반으로, 현대적인 아이콘과 통일된 이벤트 처리 방식을 제공합니다. 이 변경은 UI/UX 개편(P-07)의 일환으로 진행됩니다.
-    - **(코드 예시)**
-        ```powerbuilder
-        // AS-IS:
-        type pb_1 from u_pb_cal within w_pdm_11740
-
-        // TO-BE:
-        type pb_1 from u_pic_cal within w_pdm_11740
-        ```
-
-- **P-11: `ue_retrieve` 이벤트 내 업무별 조회 로직 추가 (CRITICAL)**
-    - **(문제점)**: 기존의 조회 로직은 모든 사용자에 대해 동일하게 동작했습니다. 새로운 시스템에서는 특정 업무(`is_Upmu = 'A'`)를 수행하는 사용자에 대해 조회 범위를 동적으로 변경해야 하는 요구사항이 추가되었습니다.
-    - **(해결책)**: `ue_retrieve` 이벤트의 시작 부분에 `is_Upmu` 변수를 확인하는 분기문을 추가합니다. `is_Upmu`가 'A'일 경우, `SYSCNFG` 테이블을 조회하여 `sabu_f`와 `sabu_t` 값을 설정하고, 이를 조회 조건으로 활용합니다. 이는 MDI 환경에서 사용자 권한 및 업무 구분에 따른 데이터 조회를 표준화하기 위한 필수적인 로직입니다.
-    - **(코드 예시)**
-        ```powerbuilder
-        // In ue_retrieve event:
-        if is_Upmu = 'A' then
-        	if dw_ip.AcceptText() = -1 then return  
-
-        	w_mdi_frame.SetMicroHelp("") 
-        	
-        	sabu_f =Trim(dw_ip.GetItemString(1,"saupj"))
-        	
-        	SetPointer(HourGlass!)
-        	IF sabu_f ="" OR IsNull(sabu_f) OR sabu_f ="99" THEN
-        		sabu_f ="10"
-        		sabu_t ="98"
-        		SELECT "REFFPF"."RFNA1"  
-        		 INTO :sabu_nm  
-        		 FROM "REFFPF"  
-        		WHERE ( "REFFPF"."RFCOD" = 'AD' ) AND  
-        				( "REFFPF"."RFGUB" = '99' )   ;
-        	ELSE
-        		sabu_t =sabu_f
-        		SELECT "REFFPF"."RFNA1"  
-        		 INTO :sabu_nm  
-        		 FROM "REFFPF"  
-        		WHERE ( "REFFPF"."RFCOD" = 'AD' ) AND  
-        				( "REFFPF"."RFGUB" = :sabu_f )   ;
-        	END IF
-        end if
-
-        // Original retrieve logic follows...
-        ```
-
-### 3.4. [Level 3] UI/UX 현대화 (UI/UX Modernization Layer)
-- **P-07: UI/UX 전면 개편 (CRITICAL)**
-    - **목표**: 모든 윈도우에 일관된 최신 UI/UX 템플릿을 적용합니다.
-    - **레이아웃 재구성**: 기존의 불규칙한 컨트롤 배치를 버리고, `r_head`(상단 영역), `r_detail`(상세 영역) 등 명명된 `Rectangle` 컨트롤을 사용하여 화면을 구조적으로 분할합니다.
-    - **컨트롤 재배치**: 모든 데이터윈도우, 버튼 등의 컨트롤은 새로 생성된 `Rectangle` 영역에 맞춰 위치와 크기가 재조정됩니다.
-    - **장식 컨트롤 교체**: **P-05**에 따라 삭제된 `RoundRectangle` 등의 장식 컨트롤을 대체하여, `Rectangle` 컨트롤이 새로운 시각적 구조를 형성합니다.
-
-- **P-08: 표준 MDI 이벤트 연동 (CRITICAL)**
-    - **목표**: 윈도우 내부의 버튼 이벤트를 MDI 공통 툴바와 연동합니다.
-    - **표준 사용자 이벤트 추가**: `ue_retrieve`(조회), `ue_update`(수정), `ue_delete`(삭제), `ue_append`(추가) 등 MDI 툴바의 기능과 일치하는 표준 사용자 이벤트를 윈도우에 추가합니다.
-    - **이벤트 호출 체인**: MDI 툴바 버튼 클릭 -> 윈도우의 표준 사용자 이벤트(`ue_*`) 트리거 -> 해당 이벤트의 스크립트가 기존에 숨겨진 `PictureButton`(`p_inq`, `p_mod` 등)의 `Clicked` 이벤트를 호출합니다. 이를 통해 기존 로직을 수정 없이 재사용합니다.
+-   **P-01: 부모-자식 윈도우 동기화 (CRITICAL)**
+    -   **(목적)**: PowerBuilder 10.5 환경에서 새로운 부모 윈도우의 정의에 맞춰, 자식 윈도우에 불필요하게 남은 컨트롤과 이벤트를 자동으로 **주석 처리**하여 컴파일 오류를 방지하고, 수동 검토 및 복구를 용이하게 합니다.
+    -   **(처리 방안)**:
+        1.  자식 윈도우 소스에서 상속 관계(`global type ... from ...`)를 파악합니다.
+        2.  `target/_reference` 폴더에서 최신 부모 윈도우의 소스를 읽어와 컨트롤 이름 목록을 추출합니다.
+        3.  자식 윈도우의 컨트롤 이름 목록과 부모 윈도우의 컨트롤 이름 목록을 비교하여, 부모에 더 이상 존재하지 않는 '오래된 컨트롤(obsolete control)'을 식별합니다.
+        4.  오래된 컨트롤이 하나라도 발견되면, 변환될 파일의 **3번째 줄**에 아래와 같은 설명 주석을 **한 번만** 추가합니다.
+            -   `//& PBMigrator에 의해 주석 처리된 더 이상 사용되지 않는 컨트롤 및 이벤트 (YYYY-MM-DD).`
+        5.  자식 윈도우 소스 코드에서, 식별된 각 '오래된 컨트롤'의 정의 블록(`type...end type`)과 모든 관련 이벤트 블록(`event...end event`)을 찾아, 해당 블록의 **모든 라인 앞에 `//& `를 붙여** 주석 처리합니다.
+    -   **(파일 포맷)**: 최종 저장되는 파일은 **U-DOS (UTF-16 LE with BOM)** 형식과 **CRLF** 줄바꿈을 사용해야 합니다.
+    -   **(상태)**: `engine.py`의 `apply_rules` 메서드에 절차적, 라인 기반 로직으로 구현 완료. `spec.py`는 컨트롤 이름 목록을 추출하는 헬퍼 함수를 제공합니다.
 
 ---
 

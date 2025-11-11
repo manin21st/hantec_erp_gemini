@@ -1,91 +1,154 @@
-# -*- coding: utf-8 -*-
-"""
-마이그레이션 엔진 모듈
-
-이 모듈은 PBMigrator의 핵심 로직을 담당하는 `MigrationEngine` 클래스를 포함합니다.
-엔진은 정의된 순서에 따라 개별 마이그레이션 규칙을 동적으로 불러와 소스 코드에 적용합니다.
-"""
-
-import importlib
+import os
+import re
+from datetime import datetime # Import datetime module
+from .spec import parse_pb_source, PBWindowInfo
 
 class MigrationEngine:
     """
-    마이그레이션 규칙을 소스 코드에 적용하는 핵심 엔진 클래스입니다.
+    마이그레이션 규칙을 소스 코드에 적용하는 핵심 엔진 클래스 (절차적, 라인 기반).
     """
-    def __init__(self):
+    def apply_rules(self, source_code: str, selected_rules: list, reference_folder: str) -> tuple:
         """
-        MigrationEngine의 생성자입니다.
-
-        - 규칙 적용 순서 정의: 규칙들은 상호 의존성을 가질 수 있으므로, 정의된 순서가 매우 중요합니다.
-          (예: 장식용 컨트롤(P-05)을 삭제한 후, 새로운 UI 레이아웃(P-07)을 적용해야 함)
-        - 규칙 ID와 실제 파이썬 모듈을 매핑합니다.
-        """
-        # 규칙 적용 순서입니다. 이 순서는 매우 중요합니다.
-        # 예를 들어, 오래된 컨트롤을 삭제(P-05)한 후에 새로운 컨트롤의 크기를 조정(P-07)해야 합니다.
-        self.rule_order = [
-            "P-05", # 장식용 컨트롤 삭제
-            "P-07", # 새로운 사각형(Rectangle)으로 UI 구조 재구성
-            "P-02", # 상속받은 컨트롤 처리 (화면 밖으로 이동)
-            "P-08", # 표준 MDI 이벤트 추가
-            "P-03", # 이벤트 프로토타입 선언 추가
-            "P-04", # resize/activate 등 표준 이벤트 스크립트 추가
-            # P-01, P-06은 파일 I/O 시점에 처리되므로 엔진 규칙에 포함되지 않습니다.
-        ]
-
-        # 규칙 ID와 해당 규칙을 구현한 파이썬 모듈을 매핑하는 딕셔너리입니다.
-        # 이를 통해 규칙을 동적으로 임포트하여 적용할 수 있습니다.
-        self.rule_module_map = {
-            "P-02": ".p02_inheritance",
-            "P-03": ".p03_events",
-            "P-04": ".p04_std_events",
-            "P-05": ".p05_controls",
-            "P-07": ".p07_gui_modernization",
-            "P-08": ".p08_mdi_events",
-        }
-
-    def apply_rules(self, code, selected_rules, **kwargs):
-        """
-        선택된 마이그레이션 규칙들을 미리 정의된 순서에 따라 소스 코드에 적용합니다.
-
-        Args:
-            code (str): 변환할 원본 소스 코드입니다.
-            selected_rules (list): 적용할 규칙 ID의 리스트입니다. (예: ['P-01', 'P-02'])
-            **kwargs: 각 규칙의 apply 함수에 전달될 추가적인 파라미터입니다.
-
-        Returns:
-            tuple: 변환된 소스 코드(str)와 실행 결과 리포트 리스트(list of dict)를 담은 튜플을 반환합니다.
+        선택된 마이그레이션 규칙들을 소스 코드에 적용합니다.
         """
         reports = []
         
-        # 헤더와 본문 분리
-        lines = code.splitlines(True)
-        if lines and lines[0].startswith('$PBExportHeader'):
-            header = lines[0]
-            body = "".join(lines[1:])
-        else:
-            header = ""
-            body = code
+        if "P-01" not in selected_rules:
+            reports.append({"rule": "N/A", "status": "Skipped", "details": "P-01 rule not selected."})
+            return source_code, reports
 
-        transformed_body = body
+        try:
+            # 1. 자식 윈도우 정보 파싱
+            child_info = parse_pb_source(source_code)
+            if not child_info.name: # 윈도우 이름이 없으면 파싱 실패 또는 상속 윈도우 아님
+                reports.append({"rule": "P-01", "status": "Skipped", "details": "Not an inheritance window or parsing failed for child."})
+                return source_code, reports
 
-        # 정의된 순서(self.rule_order)에 따라 규칙을 하나씩 적용합니다.
-        for rule_id in self.rule_order:
-            # 이 규칙이 사용자가 선택한 규칙 목록에 있는지 확인합니다.
-            if rule_id in selected_rules:
-                try:
-                    # 규칙 ID에 해당하는 모듈 이름을 가져옵니다.
-                    module_name = self.rule_module_map[rule_id]
-                    # importlib를 사용하여 모듈을 동적으로 임포트합니다.
-                    rule_module = importlib.import_module(module_name, package='pb_migrator.rules')
-                    # 해당 모듈의 apply 함수를 호출하여 변환을 수행합니다.
-                    transformed_body, report = rule_module.apply(transformed_body, **kwargs)
-                    reports.append(report)
-                except ImportError:
-                    reports.append({"rule": rule_id, "status": "Error", "details": f"모듈을 임포트할 수 없습니다: {module_name}."})
-                except Exception as e:
-                    reports.append({"rule": rule_id, "status": "Error", "details": f"규칙 적용 중 오류 발생: {e}"})
+            # 2. 부모 윈도우 정보 파싱
+            parent_source_path = os.path.join(reference_folder, f"{child_info.parent}.srw")
+            
+            # 인코딩: utf-16 먼저 시도, 실패 시 cp949 (PowerBuilder 파일 특성 고려)
+            try:
+                with open(parent_source_path, 'r', encoding='utf-16', errors='strict') as f:
+                    parent_source_code = f.read()
+            except (FileNotFoundError, UnicodeDecodeError):
+                with open(parent_source_path, 'r', encoding='cp949', errors='ignore') as f:
+                    parent_source_code = f.read()
+            
+            parent_info = parse_pb_source(parent_source_code)
+            if not parent_info.name: # 부모 윈도우 이름이 없으면 파싱 실패
+                reports.append({"rule": "P-01", "status": "Error", "details": f"Parent window parsing failed: {parent_source_path}"})
+                return source_code, reports
+
+        except FileNotFoundError:
+            details = f"Parent window source file not found: {parent_source_path}"
+            reports.append({"rule": "P-01", "status": "Error", "details": details})
+            return source_code, reports
+        except Exception as e:
+            reports.append({"rule": "P-01", "status": "Error", "details": f"Parsing failed: {e}"})
+            return source_code, reports
+
+        # 3. P-01 규칙 적용: 부모에 없는 컨트롤 및 관련 이벤트 주석 처리
+        parent_control_names = parent_info.control_names
+        obsolete_control_names = []
+
+        for control_name in child_info.control_names:
+            if control_name not in parent_control_names:
+                obsolete_control_names.append(control_name)
         
-        # 헤더와 변환된 본문을 다시 결합
-        transformed_code = header + transformed_body
+        if not obsolete_control_names:
+            reports.append({"rule": "P-01", "status": "Skipped", "details": "No controls to comment out."})
+            return source_code, reports
+
+        # 소스 코드를 라인별로 분리 (CRLF 유지)
+        child_lines = source_code.split('\r\n')
         
-        return transformed_code, reports
+        # 주석 처리할 블록의 시작/끝 라인 인덱스 저장
+        # (start_index, end_index, control_name)
+        blocks_to_comment = [] 
+
+        # 컨트롤 블록 찾기
+        for control_name in obsolete_control_names:
+            control_block_start_pattern = re.compile(r"^type\s+" + re.escape(control_name) + r"\s+from\s+[\w`]+", re.IGNORECASE)
+            control_block_end_pattern = re.compile(r"^end type", re.IGNORECASE)
+            
+            start_index = -1
+            for i, line in enumerate(child_lines):
+                if control_block_start_pattern.search(line):
+                    start_index = i
+                elif start_index != -1 and control_block_end_pattern.search(line):
+                    blocks_to_comment.append((start_index, i, control_name))
+                    start_index = -1 # 다음 블록을 위해 초기화
+
+        # 이벤트 블록 찾기
+        for control_name in obsolete_control_names:
+            event_block_start_pattern = re.compile(r"^event\s+" + re.escape(control_name) + r"(?:`[\w`]+)?::[\w`]+;", re.IGNORECASE)
+            event_block_end_pattern = re.compile(r"^end event", re.IGNORECASE)
+
+            start_index = -1
+            for i, line in enumerate(child_lines):
+                if event_block_start_pattern.search(line):
+                    start_index = i
+                elif start_index != -1 and event_block_end_pattern.search(line):
+                    blocks_to_comment.append((start_index, i, control_name))
+                    start_index = -1 # 다음 블록을 위해 초기화
+        
+        # 변수 선언 라인 찾기
+        declaration_lines_to_comment = []
+        for control_name in obsolete_control_names:
+            # 1. 변수 선언 (e.g., rr_1 rr_1)
+            declaration_pattern = re.compile(r"^\s*" + re.escape(control_name) + r"\s+" + re.escape(control_name) + r"\s*$", re.IGNORECASE)
+            # 2. create 문 (e.g., this.rr_1=create rr_1)
+            create_pattern = re.compile(r"^\s*this\." + re.escape(control_name) + r"\s*=\s*create\s+" + re.escape(control_name) + r"\s*$", re.IGNORECASE)
+            # 3. destroy 문 (e.g., destroy(this.rr_1))
+            destroy_pattern = re.compile(r"^\s*destroy\s*\(\s*this\." + re.escape(control_name) + r"\s*\)\s*$", re.IGNORECASE)
+            # 4. Control 배열 할당 (e.g., this.Control[...]=this.rr_1)
+            control_array_pattern = re.compile(r"^\s*this\.Control\[.+\]\s*=\s*this\." + re.escape(control_name) + r"\s*$", re.IGNORECASE)
+
+            for i, line in enumerate(child_lines):
+                if declaration_pattern.search(line) or \
+                   create_pattern.search(line) or \
+                   destroy_pattern.search(line) or \
+                   control_array_pattern.search(line):
+                    declaration_lines_to_comment.append(i)
+
+        # 실제 주석 처리된 라인 생성
+        modified_lines = []
+        
+        # 주석 처리할 모든 라인 인덱스를 집합으로 관리
+        lines_to_comment_set = set(declaration_lines_to_comment)
+        for block_start, block_end, _ in blocks_to_comment:
+            for i in range(block_start, block_end + 1):
+                lines_to_comment_set.add(i)
+
+        # 기본 주석 처리 적용
+        for i, line in enumerate(child_lines):
+            if i in lines_to_comment_set:
+                modified_lines.append(f"//& {line}")
+            else:
+                modified_lines.append(line)
+
+        # 오래된 컨트롤이 있는 경우, 설명 주석 추가
+        if obsolete_control_names:
+            current_date = datetime.now().strftime("%Y-%m-%d")
+            header_comment = f"//& PBMigrator에 의해 주석 처리된 더 이상 사용되지 않는 컨트롤 및 이벤트 ({current_date})."
+            
+            # 'forward' 라인 찾기
+            forward_index = -1
+            for i, line in enumerate(modified_lines):
+                if line.strip().lower() == "forward":
+                    forward_index = i
+                    break
+            
+            if forward_index != -1:
+                modified_lines.insert(forward_index + 1, header_comment)
+            else: # 'forward'가 없으면 파일의 3번째 라인에 삽입 (폴백)
+                if len(modified_lines) > 2:
+                    modified_lines.insert(2, header_comment)
+                else:
+                    modified_lines.append(header_comment)
+
+        details = f"Commented out obsolete controls, events, and all related references: {', '.join(obsolete_control_names)}"
+        reports.append({"rule": "P-01", "status": "Success", "details": details})
+
+        return '\r\n'.join(modified_lines), reports

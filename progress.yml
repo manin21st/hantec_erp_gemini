@@ -1,127 +1,85 @@
 summary: |
-  - `source`/_sample과 `target`/_sample 파일 비교를 통한 마이그레이션 패턴 분석
-  - `gemini.md` 핸드북에 최종 패턴(P-01~P-08) 및 `PBMigrator` 개발 목표/사용법 명시 완료
-  - `specification.md` 명세서에 최종 UI/UX 설계 반영 완료
-  - `PBMigrator` 프로토타입 개발 완료 (탭 UI, Diff, 저장, 보고서, 스크롤 동기화 등 모든 요청사항 반영)
-  - `checklist.md` 등 불필요한 문서 정리 및 `gemini.md` 최종 간소화 완료.
-  - P-06 인코딩 이슈 분석 및 관련 문서 정리 완료.
-  - PBMigrator의 P-07(UI) 규칙 및 경로 로직 버그 수정, 빌드 프로세스 안정화.
-  - 반복적인 실수를 방지하기 위한 새로운 핵심 운영 원칙 수립.
-  - PBMigrator.exe 실행 오류의 근본 원인(모듈 누락, BOM 인코딩)을 진단 및 해결하고, 관련 문서를 최신화하여 빌드 안정성 확보.
-user_notes: |
-  # 사용자 메모
-  여기에 자유롭게 메모를 남겨주세요. 다음 세션 시작 시 제가 확인하겠습니다.
+  이 문서는 프로젝트의 모든 작업 내역을 추적하고 관리하는 **마스터 작업 일지**입니다.
+  - **detailed_log**: 모든 작업(성공, 실패, 보류), 주요 결정, 디버깅 과정 등 모든 활동을 시간 순서대로 기록합니다.
+  - **역할**: Git 커밋만으로는 파악하기 어려운 각 작업의 맥락과 의사결정 과정을 추적하는 것을 최우선 목적으로 합니다.
+  - **중요**: 새로운 세션을 시작할 때, 이 파일의 `detailed_log`를 가장 먼저 검토하여 이전 작업 흐름을 파악해야 합니다.
 detailed_log:
 - timestamp: '2025-10-02 10:00:01'
   status: "완료"
   target: "_sample/ 폴더 전체"
   description: "152개 전체 샘플 파일 분석 완료. gemini.md에 정의된 최종 패턴(P-01 ~ P-08)이 모든 파일에 일관되게 적용되었음을 확인. 예외 케이스 없음."
-  checklist_result: "P-01:Y,P-02:Y,P-03:Y,P-04:Y,P-05:Y,P-06:Y,P-07:Y,P-08:Y"
-  worker: "Gemini"
 - timestamp: '2025-10-02 10:30:00'
   status: "완료"
   target: "PBMigrator"
   description: "PBMigrator 프로토타입 1차 구현 완료 (로딩, 규칙 엔진, 미리보기, 저장, 리포팅 기능 포함)."
-  checklist_result: "N/A"
-  worker: "Gemini"
 - timestamp: '2025-10-02 11:00:00'
   status: "완료"
   target: "PBMigrator GUI"
   description: "사용자 피드백 반영 UI 개선: 탭 레이아웃, 스크롤 동기화, 메뉴/상태바 추가, 자동 탭 전환, 창 최대화 등 적용."
-  checklist_result: "N/A"
-  worker: "Gemini"
 - timestamp: '2025-10-02 11:00:01'
   status: "완료"
   target: "specification.md"
   description: "PBMigrator의 최종 UI/UX 변경사항(탭 구조 등)을 명세서에 업데이트."
-  checklist_result: "N/A"
-  worker: "Gemini"
 - timestamp: '2025-10-02 11:00:02'
   status: "완료"
   target: "checklist.md"
   description: "자동화된 리포트 기능으로 대체되어 더 이상 사용되지 않는 수동 체크리스트 파일 삭제."
-  checklist_result: "N/A"
-  worker: "Gemini"
 - timestamp: '2025-10-02 12:00:00'
   status: "완료"
   target: "gemini.md"
   description: "PBMigrator 사용법을 명시하고, 현재 프로세스에 맞게 핸드북 내용 전체 재검토."
-  checklist_result: "N/A"
-  worker: "Gemini"
 - timestamp: '2025-10-02 12:30:00'
   status: "완료"
   target: "gemini.md"
   description: "불필요한 '오류 패턴' 섹션 삭제 및 섹션 번호 재정렬 등 핸드북 최종 간소화 작업 완료."
-  checklist_result: "N/A"
-  worker: "Gemini"
 - timestamp: '2025-10-02 13:00:00'
   status: "완료"
   target: "specification.md"
   description: "PBMigrator의 최종 UI/UX 변경사항(탭 구조, 메뉴/상태바, 스크롤 동기화, 자동 탭 전환 등)을 명세서에 업데이트 완료."
-  checklist_result: "N/A"
-  worker: "Gemini"
 - timestamp: '2025-10-02 14:00:00'
   status: "완료"
   target: "pb_migrator/rules/p07_gui_modernization.py"
   description: "P-07 규칙 고도화: 컨트롤의 기존 위치를 파싱하여 r_head/r_detail 내에 동적으로 재배치하는 로직 구현 완료."
-  checklist_result: "N/A"
-  worker: "Gemini"
 - timestamp: '2025-10-02 14:00:01'
   status: "완료"
   target: "pb_migrator/rules/p01_encoding.py"
   description: "P-01 규칙 명확화: 인코딩 및 줄바꿈 처리가 GUI의 저장 기능에서 이루어짐을 명시."
-  checklist_result: "N/A"
-  worker: "Gemini"
 - timestamp: '2025-10-02 14:30:00'
   status: "보류"
   target: "pb_migrator/rules/p06_broken_korean.py"
   description: "P-06 규칙 구현: 코드 내 깨진 한글 문자열 수정 로직 구현 보류. 현상 파악 및 패턴 분석 필요."
-  worker: "Gemini"
 - timestamp: '2025-10-02 14:30:01'
   status: "예정"
   target: "pb_migrator/rules/p07_gui_modernization.py"
   description: "P-07 규칙 고도화: 컨트롤 재배치 로직 추가 개선 (예: 특정 컨트롤 그룹화, 동적 크기 조정)."
-  checklist_result: "N/A"
-  worker: "Gemini"
 - timestamp: '2025-10-02 15:00:00'
   status: "완료"
   target: "user_notes.md"
   description: "사용자 메모 전용 파일 user_notes.md 생성 및 progress.yml에서 user_notes 섹션 제거."
-  checklist_result: "N/A"
-  worker: "Gemini"
 - timestamp: '2025-10-02 15:30:00'
   status: "진행 중"
   target: "pb_migrator/rules/p07_gui_modernization.py"
   description: "P-07 규칙 고도화: 컨트롤 재배치 로직 추가 개선 작업 진행 중. read_file 도구 지연 문제 발생."
-  worker: "Gemini"
 - timestamp: '2025-10-02 15:30:01'
   status: "보류"
   target: "pb_migrator/rules/p06_broken_korean.py"
   description: "P-06 규칙 구현: 깨진 한글 현상 파악 보류 중. read_file 도구 지연 문제 발생."
-  worker: "Gemini"
 - timestamp: '2025-10-02 15:30:02'
   status: "오류"
   target: "read_file tool"
   description: "read_file 도구 응답 지연 및 중단 문제 발생. 작업 진행에 차질."
-  worker: "Gemini"
 - timestamp: '2025-10-02 15:30:03'
   status: "예정"
   target: "pb_migrator/rules/p07_gui_modernization.py"
   description: "P-07 규칙 고도화: 컨트롤 재배치 로직 추가 개선 (예: 특정 컨트롤 그룹화, 동적 크기 조정)."
-  checklist_result: "N/A"
-  worker: "Gemini"
 - timestamp: '2025-10-03 16:00:00'
   status: "완료"
   target: "PBMigrator Build & Rules"
   description: "PyInstaller 빌드 오류 및 규칙 실행 오류 해결. P-07(UI), P-03(이벤트), P-08(MDI) 규칙의 파싱 로직을 수정하여 안정성 확보. gemini.md 핸드북에 안정화된 빌드 절차 반영."
-  checklist_result: "N/A"
-  worker: "Gemini"
 - timestamp: '2025-10-15 10:00:00'
   status: "완료"
   target: "P-06 한글 인코딩 처리"
   description: "P-06(깨진 한글) 문제 분석 완료. 소스 파일(CP949)과 타겟 파일(UTF-16 LE)의 인코딩 처리가 PBMigrator의 파일 I/O 로직에서 이미 올바르게 구현되었음을 확인. 별도 규칙이 불필요하여 관련 문서를 정리함."
-  checklist_result: "N/A"
-  worker: "Gemini"
 - timestamp: '2025-10-15 11:00:00'
   status: "진행 중"
   target: "PBMigrator 안정화 및 신뢰 회복"
@@ -131,17 +89,14 @@ detailed_log:
     - `gui.py`의 경로 탐색 로직을 수정하여, 빌드된 .exe 파일이 `source` 폴더를 정상적으로 찾도록 수정.
     - 반복적인 프로세스 오류를 근절하기 위해, "새 세션 시작 시 모든 관리 문서를 먼저 읽는다"는 핵심 운영 원칙을 정립하고 장기 기억에 저장함.
     - 현재, 수정된 최종 빌드 결과물을 사용자가 직접 테스트하기 위해 대기 중.
-  worker: "Gemini"
 - timestamp: '2025-10-15 18:00:00'
   status: "완료"
   target: "PBMigrator 안정화 및 문서 최신화"
   description: "PBMigrator.exe 실행 오류의 근본 원인(모듈 누락, BOM 인코딩)을 진단하고 해결. `PBMigrator.spec` 및 `gui.py`를 수정하여 안정적인 빌드 확보. `gemini.md`에 '클린 빌드' 등 최신화된 빌드 절차를 반영하여 문서 현행화 완료."
-  worker: "Gemini"
 - timestamp: '2025-10-16 17:00:00'
   status: "완료"
   target: "P-01 인코딩 처리 (CP949)"
   description: "PowerBuilder 임포트 실패 문제의 원인이 UTF-16 LE 인코딩이 아닌 CP949 인코딩이었음을 확인하고, gui.py의 파일 저장 로직을 CP949로 변경하여 해결. `gemini.md` 및 `specification.md`의 P-01 규칙 명세 업데이트."
-  worker: "Gemini"
 - timestamp: '2025-10-16 18:00:00'
   status: "완료"
   target: "P-01, P-06 규칙 리팩토링 및 GitHub 동기화"
@@ -149,7 +104,6 @@ detailed_log:
     - 불필요한 P-01, P-06 규칙 관련 소스 코드, UI 요소, 빌드 설정을 모두 제거하여 프로젝트 구조를 단순화.
     - `gemini.md`, `specification.md` 등 관련 문서를 최신 상태로 업데이트.
     - 모든 변경 사항을 GitHub 원격 저장소에 커밋 및 푸시 완료.
-  worker: "Gemini"
 - timestamp: '2025-10-16 19:00:00'
   status: "완료"
   target: "P-03, P-08 규칙 로직 수정 및 최종 버그 해결"
@@ -157,5 +111,58 @@ detailed_log:
     - PowerBuilder 임포트 시 발생하던 C0031 Syntax Error의 근본 원인을 분석.
     - 비정상적인 소스 파일 구조에 대응하지 못하고 `forward` 블록을 손상시키던 P-03, P-08 규칙의 로직 결함을 발견.
     - 해당 규칙들이 `forward` 블록 전체를 재작성하는 대신, 필요한 선언만 안전하게 삽입하도록 수정하여 문제 해결.
-    - 내부적으로 `\n`을 사용하고 최종 저장 시점에만 `\r\n`으로 변환하는 방식으로 안정성 확보.
-  worker: "Gemini"
+    - 내부적으로 `
+`을 사용하고 최종 저장 시점에만 `
+`으로 변환하는 방식으로 안정성 확보.
+- timestamp: '2025-11-11 10:00:00'
+  status: "완료"
+  target: "pb_migrator/spec.py (구 pb_parser.py) 파일명 변경 및 기능 개선"
+  description: |
+    - `pb_parser.py` 파일을 `spec.py`로 이름 변경.
+    - `PBWindow` 클래스에 `commented_controls` 리스트 추가 및 `to_source` 메서드 개선.
+    - 속성 파싱 로직 강화 및 주석 처리된 컨트롤(전체 정의 및 이벤트 포함) 처리 기능 구현.
+- timestamp: '2025-11-11 10:30:00'
+  status: "완료"
+  target: "pb_migrator/engine.py 로직 수정"
+  description: |
+    - `_apply_pa01_control_override` 메서드를 수정하여 더 이상 사용되지 않는 컨트롤을 삭제하는 대신 `commented_controls` 리스트로 이동.
+    - `pa01_property_override.py` 관련 로직 및 임포트 제거.
+- timestamp: '2025-11-11 10:45:00'
+  status: "완료"
+  target: "pb_migrator/rules/pa01_property_override.py 파일 제거"
+  description: "더 이상 필요 없는 `pa01_property_override.py` 파일 제거."
+- timestamp: '2025-11-11 11:00:00'
+  status: "완료"
+  target: "P-01 규칙 (컨트롤 주석 처리) 테스트 및 검증"
+  description: |
+    - `w_mat_03540.srw` 파일을 대상으로 P-01 규칙(더 이상 사용되지 않는 컨트롤 주석 처리) 적용 테스트.
+    - `C:\erpman\hantec_erp_gemini\target\w_mat_03540_original.srw` 및 `C:\erpman\hantec_erp_gemini\target\w_mat_03540_migrated.srw` 파일 생성 확인.
+    - `p_xls`, `p_sort`, `rr_1`, `rr_2` 등 부모에 없는 컨트롤들이 `GEMINI_COMMENT_START`/`END` 마커와 함께 성공적으로 주석 처리됨을 확인.
+- timestamp: '2025-11-11 11:30:00'
+  status: "완료"
+  target: "specification.md"
+  description: "P-01 규칙의 상세 로직(주석 처리 방식, //& 마커, 단일 설명 주석, U-DOS 파일 포맷)을 반영하여 명세서 업데이트."
+- timestamp: '2025-11-11 11:45:00'
+  status: "완료"
+  target: "gemini.md"
+  description: "P-01 규칙의 상세 로직(주석 처리 방식, //& 마커, 단일 설명 주석, U-DOS 파일 포맷)을 반영하여 핸드북 업데이트."
+- timestamp: '2025-11-11 14:00:00'
+  status: "디버깅"
+  target: "P-01 규칙 (인코딩)"
+  description: "마이그레이션된 파일이 PowerBuilder에서 비정상 종료되는 문제 발생. 원인을 U-DOS(UTF-16)와 U8-DOS(UTF-8)의 차이로 진단하고, 출력 인코딩을 'utf-16-le'로 변경."
+- timestamp: '2025-11-11 14:15:00'
+  status: "디버깅"
+  target: "P-01 규칙 (BOM)"
+  description: "인코딩 변경 후에도 파일이 깨져보이는 문제 발생. 원인을 BOM(Byte Order Mark) 누락으로 진단하고, 출력 인코딩을 'utf-16'으로 최종 변경하여 해결."
+- timestamp: '2025-11-11 14:30:00'
+  status: "디버깅"
+  target: "P-01 규칙 (참조 오류)"
+  description: "임포트 후 'Illegal data type' 오류 발생. 원인을 컨트롤 정의만 주석 처리하고 관련 참조(변수 선언)를 누락한 것으로 진단. 변수 선언부도 주석 처리하도록 로직 수정."
+- timestamp: '2025-11-11 14:45:00'
+  status: "완료"
+  target: "P-01 규칙 (최종)"
+  description: "추가로 발생 가능한 참조 오류(create/destroy, Control 배열)를 예측하여 선제적으로 주석 처리 로직 확장. 최종적으로 PowerBuilder 임포트 및 컴파일 오류 없음 확인."
+- timestamp: '2025-11-11 15:00:00'
+  status: "완료"
+  target: "P-01 규칙 (주석 위치)"
+  description: "설명 주석이 PowerBuilder IDE에서 보이지 않는 문제 해결. 주석 위치를 'forward' 선언 바로 다음 줄로 이동하여 최종 수정 완료."

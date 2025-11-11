@@ -1,3 +1,3 @@
  ---------- Compiler: Errors
-ACPL01.PBL(w_cic00010).9: Error       C0031: Syntax error
+mat_e020.pbl(w_mat_03540).w_mat_03540.3: Error       C0001: Illegal data type: rr_1
  ---------- Finished Errors
