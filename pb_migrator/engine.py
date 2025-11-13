@@ -3,17 +3,18 @@ import re
 from collections import namedtuple
 from datetime import datetime
 
-# PBWindowInfo는 파싱된 윈도우의 핵심 정보를 담는 간단한 튜플입니다.
-PBWindowInfo = namedtuple("PBWindowInfo", ["name", "parent", "control_names"])
+# 파싱된 컨트롤의 상세 정보를 담는 튜플
+ControlInfo = namedtuple("ControlInfo", ["name", "from_type"])
+# 파싱된 윈도우의 핵심 정보를 담는 튜플
+PBWindowInfo = namedtuple("PBWindowInfo", ["name", "parent", "controls"])
 
 def parse_pb_source(source_code: str) -> PBWindowInfo:
     """
-    PowerBuilder 소스 코드를 파싱하여 윈도우 이름, 부모 이름, 컨트롤 이름 목록을 반환합니다.
-    이 함수는 복잡한 객체 모델을 구축하는 대신 필요한 정보만 추출합니다.
+    PowerBuilder 소스 코드를 파싱하여 윈도우 이름, 부모 이름, 컨트롤 목록(이름, 기반타입 포함)을 반환합니다.
     """
     window_name = ""
     parent_name = ""
-    control_names = set()
+    controls = []
 
     # 1. 윈도우 이름 및 부모 파악
     # 'global type WindowName from ParentName' 또는 'global type WindowName from window' 형태를 모두 처리
@@ -22,16 +23,17 @@ def parse_pb_source(source_code: str) -> PBWindowInfo:
         window_name = global_type_match.group(1).lower()
         parent_name = global_type_match.group(2) # 부모 이름은 소문자로 변환하지 않음
 
-    # 2. 컨트롤 이름 추출
-    # 'type ControlName from ...' 형태의 블록에서 컨트롤 이름 추출
+    # 2. 컨트롤 정보(이름, 기반타입) 추출
+    # 'type ControlName from FromType' 형태의 블록에서 이름과 기반타입 추출
     # 윈도우 자체의 type 블록은 제외
-    control_pattern = re.compile(r"^type\s+([\w`]+)\s+from\s+[\w`]+", re.IGNORECASE | re.MULTILINE)
+    control_pattern = re.compile(r"^type\s+([\w`]+)\s+from\s+([\w`]+)", re.IGNORECASE | re.MULTILINE)
     for match in control_pattern.finditer(source_code):
         name = match.group(1).lower()
+        from_type = match.group(2).lower()
         if name != window_name: # 윈도우 자체의 type 블록이 아닌 경우에만 추가
-            control_names.add(name)
+            controls.append(ControlInfo(name, from_type))
 
-    return PBWindowInfo(window_name, parent_name, control_names)
+    return PBWindowInfo(window_name, parent_name, controls)
 
 def get_control_block_regex(control_name: str):
     """
@@ -53,8 +55,10 @@ def get_event_block_regex(control_name: str):
         re.IGNORECASE | re.MULTILINE | re.DOTALL
     )
 
-# Import the P01Rule from the new rules module
+# Import rules from the new rules module
 from .rules.rule_p01 import P01Rule
+from .rules.rule_p02 import P02Rule
+from .rules.rule_p03 import P03Rule
 
 class MigrationEngine:
     """
@@ -70,14 +74,30 @@ class MigrationEngine:
         reports = []
         modified_source_code = source_code # Start with the original source code
 
-        # Dispatch rules based on selected_rules
+        # P-02 (이벤트 마이그레이션) -> P-03 (오래된 이미지 버튼 참조 수정) -> P-01 (오래된 컨트롤 정의 제거) 순서로 적용
+        # 이 순서는 각 규칙의 역할과 의존성을 고려하여 결정되었습니다.
+        if "P-02" in selected_rules:
+            logger(f"INFO: Applying P-02 rule...")
+            p02_rule_instance = P02Rule()
+            modified_source_code, p02_reports = p02_rule_instance.apply(modified_source_code, logger)
+            reports.extend(p02_reports)
+            if p02_reports and p02_reports[-1].get('status') != 'Skipped':
+                 logger(f"INFO: P-02 rule applied. Status: {p02_reports[-1]['status']}")
+
+        if "P-03" in selected_rules:
+            logger(f"INFO: Applying P-03 rule...")
+            p03_rule_instance = P03Rule()
+            modified_source_code, p03_reports = p03_rule_instance.apply(modified_source_code, logger)
+            reports.extend(p03_reports)
+            if p03_reports and p03_reports[-1].get('status') != 'Skipped':
+                logger(f"INFO: P-03 rule applied. Status: {p03_reports[-1]['status']}")
+
         if "P-01" in selected_rules:
             logger(f"INFO: Applying P-01 rule...")
             p01_rule_instance = P01Rule()
             modified_source_code, p01_reports = p01_rule_instance.apply(modified_source_code, reference_folder, logger)
             reports.extend(p01_reports)
-            logger(f"INFO: P-01 rule applied. Status: {p01_reports[-1]['status']}")
+            if p01_reports and p01_reports[-1].get('status') != 'Skipped':
+                logger(f"INFO: P-01 rule applied. Status: {p01_reports[-1]['status']}")
         
-        # Add more rules here as needed (e.g., if "P-02" in selected_rules: ...)
-
         return modified_source_code, reports

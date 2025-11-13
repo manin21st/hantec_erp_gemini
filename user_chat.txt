@@ -2,14 +2,42 @@ Loading files from: C:\erpman\hantec_erp_gemini\source
 Successfully loaded 2589 files.
 Active file set to: w_mat_03540.srw
 Comparing active file: w_mat_03540.srw
-Applying selected rules: P-01
+Applying selected rules: P-01, P-02, P-03
+INFO: Applying P-02 rule...
+INFO: P-02 - Migrating event 'p_retrieve::clicked' to 'ue_retrieve'.
+INFO: P-02 rule applied. Status: Success
+INFO: Applying P-03 rule...
+INFO: P-03 - Replaced 'p_print.Enabled =False' with 'w_mdi_frame.uo_toolbarstrip.of_SetEnabled("출력(&P)", false)'
+INFO: P-03 - Commented out PictureName assignment: 'p_print.PictureName = 'C:\erpman\image\인쇄_d.gif''
+INFO: P-03 - Replaced 'p_preview.enabled = False' with 'w_mdi_frame.uo_toolbarstrip.of_SetEnabled("미리보기(&R)", false)'
+INFO: P-03 - Commented out PictureName assignment: 'p_preview.PictureName = 'C:\erpman\image\미리보기_d.gif''
+INFO: P-03 - Replaced 'p_xls.enabled = False' with 'w_mdi_frame.uo_toolbarstrip.of_SetEnabled("엑셀변환(&E)", false)'
+INFO: P-03 - Commented out PictureName assignment: 'p_xls.PictureName = 'C:\erpman\image\엑셀변환_d.gif''
+INFO: P-03 - Replaced 'p_print.Enabled =True' with 'w_mdi_frame.uo_toolbarstrip.of_SetEnabled("출력(&P)", true)'
+INFO: P-03 - Commented out PictureName assignment: 'p_print.PictureName =  'C:\erpman\image\인쇄_up.gif''
+INFO: P-03 - Replaced 'p_preview.enabled = true' with 'w_mdi_frame.uo_toolbarstrip.of_SetEnabled("미리보기(&R)", true)'
+INFO: P-03 - Commented out PictureName assignment: 'p_preview.PictureName = 'C:\erpman\image\미리보기_up.gif''
+INFO: P-03 - Replaced 'p_xls.enabled = True' with 'w_mdi_frame.uo_toolbarstrip.of_SetEnabled("엑셀변환(&E)", true)'
+INFO: P-03 - Commented out PictureName assignment: 'p_xls.PictureName = 'C:\erpman\image\엑셀변환_up.gif''
+INFO: P-03 rule applied. Status: Success
 INFO: Applying P-01 rule...
-DEBUG: P01 - Child Info: PBWindowInfo(name='w_mat_03540', parent='w_standard_print', control_names={'p_preview', 'dw_list', 'p_print', 'rr_1', 'p_sort', 'p_exit', 'dw_ip', 'p_xls', 'rr_2', 'p_retrieve', 'dw_print'})
-DEBUG: P01 - Parent Info: PBWindowInfo(name='w_standard_print', parent='window', control_names={'dw_list', 'cb_print', 'r_2', 'cb_preview', 'cb_1', 'dw_ip', 'cb_excel', 'dw_print', 'r_1'})
-DEBUG: P01 - Obsolete Control Names: ['p_preview', 'p_print', 'rr_1', 'p_sort', 'p_exit', 'p_xls', 'rr_2', 'p_retrieve']
-DEBUG: P01 - Lines to Comment Set: [5, 6, 7, 8, 13, 14, 113, 114, 116, 117, 123, 124, 140, 141, 142, 143, 144, 145, 146, 148, 149, 151, 152, 154, 155, 157, 158, 160, 161, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 176, 177, 178, 179, 180, 181, 182, 183, 184, 185, 186, 187, 188, 189, 190, 191, 192, 193, 194, 195, 196, 197, 198, 199, 200, 201, 202, 203, 204, 205, 206, 207, 208, 209, 210, 211, 212, 213, 214, 215, 216, 217, 218, 219, 220, 221, 222, 223, 224, 225, 226, 227, 228, 229, 230, 231, 232, 233, 234, 235, 236, 237, 238, 239, 406, 407, 408, 409, 410, 411, 412, 413, 414, 415, 416, 418, 419, 420, 421, 422, 423, 424, 425, 426, 427, 428]
+DEBUG: P01 - Obsolete Inherited Control Names: ['p_xls', 'p_sort', 'p_preview', 'p_exit', 'p_print', 'p_retrieve']
 INFO: P-01 rule applied. Status: Success
 --- Transformation Report ---
-Rule: P-01, Status: Success, Details: Commented out obsolete controls, events, and all related references: p_preview, p_print, rr_1, p_sort, p_exit, p_xls, rr_2, p_retrieve
+Rule: P-02, Status: Success, Details: Migrated event 'p_retrieve::clicked' to 'ue_retrieve'.
+Rule: P-03, Status: Success, Details: Replaced 'p_print.Enabled =False' with 'w_mdi_frame.uo_toolbarstrip.of_SetEnabled("출력(&P)", false)'
+Rule: P-03, Status: Success, Details: Commented out PictureName assignment: 'p_print.PictureName = 'C:\erpman\image\인쇄_d.gif''
+Rule: P-03, Status: Success, Details: Replaced 'p_preview.enabled = False' with 'w_mdi_frame.uo_toolbarstrip.of_SetEnabled("미리보기(&R)", false)'
+Rule: P-03, Status: Success, Details: Commented out PictureName assignment: 'p_preview.PictureName = 'C:\erpman\image\미리보기_d.gif''
+Rule: P-03, Status: Success, Details: Replaced 'p_xls.enabled = False' with 'w_mdi_frame.uo_toolbarstrip.of_SetEnabled("엑셀변환(&E)", false)'
+Rule: P-03, Status: Success, Details: Commented out PictureName assignment: 'p_xls.PictureName = 'C:\erpman\image\엑셀변환_d.gif''
+Rule: P-03, Status: Success, Details: Replaced 'p_print.Enabled =True' with 'w_mdi_frame.uo_toolbarstrip.of_SetEnabled("출력(&P)", true)'
+Rule: P-03, Status: Success, Details: Commented out PictureName assignment: 'p_print.PictureName =  'C:\erpman\image\인쇄_up.gif''
+Rule: P-03, Status: Success, Details: Replaced 'p_preview.enabled = true' with 'w_mdi_frame.uo_toolbarstrip.of_SetEnabled("미리보기(&R)", true)'
+Rule: P-03, Status: Success, Details: Commented out PictureName assignment: 'p_preview.PictureName = 'C:\erpman\image\미리보기_up.gif''
+Rule: P-03, Status: Success, Details: Replaced 'p_xls.enabled = True' with 'w_mdi_frame.uo_toolbarstrip.of_SetEnabled("엑셀변환(&E)", true)'
+Rule: P-03, Status: Success, Details: Commented out PictureName assignment: 'p_xls.PictureName = 'C:\erpman\image\엑셀변환_up.gif''
+Rule: P-01, Status: Success, Details: Commented out all references to obsolete controls: p_xls, p_sort, p_preview, p_exit, p_print, p_retrieve
 --- End of Report ---
 Successfully auto-saved file to: C:\erpman\hantec_erp_gemini\target\mat_e020\w_mat_03540.srw
+

@@ -174,3 +174,45 @@ detailed_log:
   status: "완료"
   target: "P-01 규칙 (주석 위치)"
   description: "설명 주석이 PowerBuilder IDE에서 보이지 않는 문제 해결. 주석 위치를 'forward' 선언 바로 다음 줄로 이동하여 최종 수정 완료."
+- timestamp: '2025-11-13 09:00:00'
+  status: "완료"
+  target: "Git 전역 설정"
+  description: |
+    - **문제:** `git log`, `git diff` 등 git 명령어 실행 시 터미널에서 한글이 깨지는 현상 발생.
+    - **근본 원인:** Git의 출력 인코딩과 Windows 터미널의 기본 인코딩(cp949)이 불일치.
+    - **해결:** `git config --global` 명령을 사용하여 Git 전역 설정을 UTF-8로 통일.
+      - `core.quotepath`를 `off`로 설정.
+      - `i18n.commitencoding` 및 `i18n.logoutputencoding`을 `utf-8`로 설정하여 근본적인 인코딩 문제 해결.
+  worker: "gemini"
+- timestamp: '2025-11-13 10:00:00'
+  status: "완료"
+  target: "PBMigrator GUI"
+  description: |
+    - **문제:** '소스 비교' 탭에서 원본과 변환본의 차이점을 비교할 때, 모든 텍스트가 노란색으로 하이라이트되는 오류 발생.
+    - **근본 원인:** `gui.py`에서 파일을 읽을 때, Windows의 줄바꿈 문자(\r\n)를 표준 줄바꿈 문자(\n)로 정규화하는 로직이 누락됨. 이로 인해 원본 텍스트(\r\n)와 엔진이 생성한 변환본 텍스트(\n) 간에 줄바꿈 문자가 불일치하여, `difflib` 비교 로직이 모든 라인을 '다름'으로 잘못 인식함.
+    - **해결:** `git diff`를 통해 줄바꿈 정규화 로직이 누락된 것을 확인. `_update_active_file_ui` 및 `preview_and_save_single_file` 함수 내 파일 읽기 로직을 줄바꿈을 정규화하던 이전 버전(f84a014)으로 원복하여 해결.
+  worker: "gemini"
+- timestamp: '2025-11-13 18:00:00'
+  status: "완료"
+  target: "P-01 규칙 로직 개선"
+  description: |
+    - **문제:** P-01 규칙 적용 후 PowerBuilder 임포트 시 'type' 선언이 주석 처리되어도 하위 속성 라인에서 컴파일 오류 발생.
+    - **해결:** P-01 규칙의 주석 처리 로직을 2단계로 개선.
+      1. 오래된 컨트롤의 `type...end type` 및 `event...end event` 블록 전체를 주석 처리.
+      2. 블록 외부에 남아있는 오래된 컨트롤 참조 라인들을 개별적으로 주석 처리.
+    - 이를 통해 PowerBuilder 파서가 주석 처리된 블록을 올바르게 무시하도록 함.
+  worker: "gemini"
+- timestamp: '2025-11-13 18:15:00'
+  status: "완료"
+  target: "PBMigrator GUI (File List Width)"
+  description: |
+    - **문제:** 파일 목록 창의 폭이 좁아 긴 파일/폴더명이 잘리지 않고 스크롤해야 보이는 문제.
+    - **해결:** `pb_migrator/gui.py`에서 `file_list_frame`의 `PanedWindow` `weight`를 `1`에서 `2`로 증가시켜, 다른 창과의 상대적 공간 배분을 조정하여 파일 목록 창의 폭을 확장.
+  worker: "gemini"
+- timestamp: '2025-11-13 18:30:00'
+  status: "완료"
+  target: "PBMigrator Log Cleanup"
+  description: |
+    - **문제:** 로그 창에 불필요한 디버깅 메시지가 출력되어 가독성 저해.
+    - **해결:** `pb_migrator/rules/rule_p01.py`에서 `DEBUG: P01 - Obsolete Inherited Control Names` 메시지를 제거하여 로그 출력 간소화.
+  worker: "gemini"

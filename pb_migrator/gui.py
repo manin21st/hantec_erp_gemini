@@ -93,8 +93,8 @@ class MainApplication(tk.Frame):
         settings_main_pane = ttk.PanedWindow(self.settings_tab, orient=tk.HORIZONTAL)
         settings_main_pane.pack(fill=tk.BOTH, expand=True)
 
-        file_list_frame = ttk.Labelframe(settings_main_pane, text="File List", width=350)
-        settings_main_pane.add(file_list_frame, weight=1)
+        file_list_frame = ttk.Labelframe(settings_main_pane, text="File List", width=455)
+        settings_main_pane.add(file_list_frame, weight=2)
         self.file_listbox, _, _ = self.create_scrolled_listbox(file_list_frame)
         self.file_listbox.bind('<<ListboxSelect>>', self.on_file_select)
         self.file_listbox.bind('<Button-1>', self._on_listbox_click)
@@ -117,7 +117,9 @@ class MainApplication(tk.Frame):
         
         self.rules_vars = {}
         rule_descriptions = {
-            "P-01": "상속 재정의 (Inheritance Override)"
+            "P-01": "오래된 상속 컨트롤 정리 (Obsolete Inherited Control Cleanup)",
+            "P-02": "이미지 버튼 이벤트 마이그레이션 (Image Button Event Migration)",
+            "P-03": "오래된 이미지 버튼 참조 수정 (Obsolete Image Button Refinement)"
         }
         rule_ids = sorted(rule_descriptions.keys())
         for rule_id in rule_ids:
