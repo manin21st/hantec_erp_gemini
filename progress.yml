@@ -111,9 +111,7 @@ detailed_log:
     - PowerBuilder 임포트 시 발생하던 C0031 Syntax Error의 근본 원인을 분석.
     - 비정상적인 소스 파일 구조에 대응하지 못하고 `forward` 블록을 손상시키던 P-03, P-08 규칙의 로직 결함을 발견.
     - 해당 규칙들이 `forward` 블록 전체를 재작성하는 대신, 필요한 선언만 안전하게 삽입하도록 수정하여 문제 해결.
-    - 내부적으로 `
-`을 사용하고 최종 저장 시점에만 `
-`으로 변환하는 방식으로 안정성 확보.
+    - 내부적으로 `을 사용하고 최종 저장 시점에만 `으로 변환하는 방식으로 안정성 확보
 - timestamp: '2025-11-11 10:00:00'
   status: "완료"
   target: "pb_migrator/spec.py (구 pb_parser.py) 파일명 변경 및 기능 개선"
@@ -162,6 +160,16 @@ detailed_log:
   status: "완료"
   target: "P-01 규칙 (최종)"
   description: "추가로 발생 가능한 참조 오류(create/destroy, Control 배열)를 예측하여 선제적으로 주석 처리 로직 확장. 최종적으로 PowerBuilder 임포트 및 컴파일 오류 없음 확인."
+- timestamp: '2025-11-12 10:58:00'
+  status: "완료"
+  target: "프로젝트 루트 폴더 정리"
+  description: |
+    - `test` 폴더 생성.
+    - `run_migration_test_correct.py` 및 `run_migration_test.py` 파일을 `test/` 폴더로 이동.
+    - `오류로그.txt` 파일을 `gemini_chat.txt`로 이름 변경.
+    - `gemini_chat.txt` 파일을 `user_chat.txt`로 이름 변경.
+    - `user_notes.md` 파일을 `user_needs.md`로 이름 변경.
+    - `gemini.md` 문서를 업데이트하여 위 파일 변경 사항 및 `test` 폴더 생성을 반영.
 - timestamp: '2025-11-11 15:00:00'
   status: "완료"
   target: "P-01 규칙 (주석 위치)"

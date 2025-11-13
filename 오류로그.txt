@@ -1,3 +1,0 @@
- ---------- Compiler: Errors
-mat_e020.pbl(w_mat_03540).w_mat_03540.3: Error       C0001: Illegal data type: rr_1
- ---------- Finished Errors

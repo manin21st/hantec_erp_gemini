@@ -302,7 +302,7 @@ class MainApplication(tk.Frame):
         if file_path:
             self.log(f"Active file set to: {os.path.basename(self.last_selected_path)}")
             try:
-                with open(self.last_selected_path, 'r', encoding='cp949') as f:
+                with open(self.last_selected_path, 'r', encoding='cp949', errors='ignore') as f:
                     file_content = f.read().replace('\r\n', '\n').replace('\r', '\n')
                 self.original_text.delete('1.0', tk.END)
                 self.original_text.insert('1.0', file_content)
@@ -333,7 +333,7 @@ class MainApplication(tk.Frame):
         self.log(f"Comparing active file: {os.path.basename(source_path)}")
 
         try:
-            with open(source_path, 'r', encoding='cp949') as f:
+            with open(source_path, 'r', encoding='cp949', errors='ignore') as f:
                 source_code = f.read().replace('\r\n', '\n').replace('\r', '\n')
         except Exception as e:
             self.log(f"Error reading file for comparison: {e}")
@@ -347,7 +347,8 @@ class MainApplication(tk.Frame):
         transformed_code, reports = self.engine.apply_rules(
             source_code, 
             selected_rules,
-            reference_folder_path
+            reference_folder_path,
+            logger=self.log
         )
         self.last_reports = reports
 
@@ -363,8 +364,8 @@ class MainApplication(tk.Frame):
         os.makedirs(os.path.dirname(target_path), exist_ok=True)
 
         try:
-            with open(target_path, 'w', encoding='cp949', newline='\r\n') as f:
-                f.write(transformed_code)
+            with open(target_path, 'w', encoding='utf-16', newline='') as f:
+                f.write(transformed_code.replace('\n', '\r\n'))
             self.log(f"Successfully auto-saved file to: {target_path}")
             self.status_var.set(f"Saved: {os.path.basename(target_path)}")
         except Exception as e:
@@ -431,14 +432,15 @@ class MainApplication(tk.Frame):
                     progress_window.update()
 
                     try:
-                        with open(source_path, 'r', encoding='cp949', errors='ignore') as f:
-                            source_code = f.read().replace('\r\n', '\n').replace('\r', '\n')
+                        with open(source_path, 'r', encoding='cp949', errors='ignore', newline='') as f:
+                            source_code = f.read()
 
                         reference_folder_path = os.path.join(self.project_root, 'target', '_reference')
                         transformed_code, reports = self.engine.apply_rules(
                             source_code, 
                             selected_rules,
-                            reference_folder_path
+                            reference_folder_path,
+                            logger=self.log
                         )
                         
                         log_entry = [f"\n--- Transformation Report for {filename} ---"]
@@ -450,8 +452,8 @@ class MainApplication(tk.Frame):
                         target_path = os.path.join(self.project_root, 'target', relative_path)
                         os.makedirs(os.path.dirname(target_path), exist_ok=True)
 
-                        with open(target_path, 'w', encoding='cp949', newline='\r\n') as f:
-                            f.write(transformed_code)
+                        with open(target_path, 'w', encoding='utf-16', newline='') as f:
+                            f.write(transformed_code.replace('\n', '\r\n'))
                         
                         log_entry.append(f"Successfully saved file to: {target_path}")
                         temp_log_file.write("\n".join(log_entry) + "\n")
