@@ -119,7 +119,8 @@ class MainApplication(tk.Frame):
         rule_descriptions = {
             "P-01": "오래된 상속 컨트롤 정리 (Obsolete Inherited Control Cleanup)",
             "P-02": "이미지 버튼 이벤트 마이그레이션 (Image Button Event Migration)",
-            "P-03": "오래된 이미지 버튼 참조 수정 (Obsolete Image Button Refinement)"
+            "P-03": "오래된 이미지 버튼 참조 수정 (Obsolete Image Button Refinement)",
+            "P-04": "dw_cond -> dw_input 대체 (Replace dw_cond with dw_input)"
         }
         rule_ids = sorted(rule_descriptions.keys())
         for rule_id in rule_ids:

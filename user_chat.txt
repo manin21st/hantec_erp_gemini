@@ -1,0 +1,5 @@
+ ---------- Compiler: Information messages
+acgl04.pbl(w_kglc01).p_search.ue_seek.1: Warning     C0209: Function or event 'ue_seek' must be declared before it can be compiled.
+acgl04.pbl(w_kglc01).p_search.ue_lbuttondown.1: Warning     C0209: Function or event 'ue_seek' must be declared before it can be compiled.
+acgl04.pbl(w_kglc01).p_search.ue_lbuttonup.1: Warning     C0209: Function or event 'ue_seek' must be declared before it can be compiled.
+acgl04.pbl(w_kglc01).p_inq.ue_retrieve.1: Warning     C0209: Function or event 'ue_retrieve' must be declared before it can be compiled.

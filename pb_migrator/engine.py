@@ -59,6 +59,7 @@ def get_event_block_regex(control_name: str):
 from .rules.rule_p01 import P01Rule
 from .rules.rule_p02 import P02Rule
 from .rules.rule_p03 import P03Rule
+from .rules.rule_p04 import P04Rule
 
 class MigrationEngine:
     """
@@ -74,8 +75,16 @@ class MigrationEngine:
         reports = []
         modified_source_code = source_code # Start with the original source code
 
-        # P-02 (이벤트 마이그레이션) -> P-03 (오래된 이미지 버튼 참조 수정) -> P-01 (오래된 컨트롤 정의 제거) 순서로 적용
+        # P-04 (dw_cond -> dw_input 대체) -> P-02 (이벤트 마이그레이션) -> P-03 (오래된 이미지 버튼 참조 수정) -> P-01 (오래된 컨트롤 정의 제거) 순서로 적용
         # 이 순서는 각 규칙의 역할과 의존성을 고려하여 결정되었습니다.
+        if "P-04" in selected_rules:
+            logger(f"INFO: Applying P-04 rule...")
+            p04_rule_instance = P04Rule()
+            modified_source_code, p04_reports = p04_rule_instance.apply(modified_source_code, logger)
+            reports.extend(p04_reports)
+            if p04_reports and p04_reports[-1].get('status') != 'Skipped':
+                 logger(f"INFO: P-04 rule applied. Status: {p04_reports[-1]['status']}")
+
         if "P-02" in selected_rules:
             logger(f"INFO: Applying P-02 rule...")
             p02_rule_instance = P02Rule()
