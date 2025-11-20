@@ -29,8 +29,11 @@
 처리하던 로직을 ue_retrieve, ue_print, ue_excel 이벤트로 변경해줘야해.
 
 구체적인 예를 들면
-event p_retrieve::clicked; 는 event ue_retrieve; 로 변경하는거야.
-단, 처리 로직이 있는 경우에 한해서만 주석처리를 안하고 이런 방식으로 변환을 해줘야 해.
+event p_inq::clicked;call super::clicked; 는
+event ue_retrieve;call super::ue_retrieve; 로 변경하는거야.
+그리고 윈도우 이벤트이기 때문에 변경된 블럭(event ue... end event)은
+on [윈도우].destroy ... end on 이후에 다른 컨트롤 type ... end type 정의가 나오기 전 사이에 위치해야 하고
+앞뒤로 한 줄 간격을 주고 추가하면 돼.
 
 정학한 변환 대상 컨트롤과 이벤트 리스트는 아래와 같아.
 p_retrieve -> ue_retrieve
@@ -47,6 +50,7 @@ p_search -> ue_seek
 결론적으로
 패턴1 보다 여기 패턴2가 먼저 처리된 이후에 패턴1이 처리되어야 주석처리를 제대로 할 수 있겠지?
 구현 계획을 제안해주고 궁금한게 있으면 물어봐.
+
 
 ---
 
@@ -111,6 +115,14 @@ p_search -> 찾기(&T)
 5. 3번으로 지워진 순번(iCurrent+숫자) 전체를 1번부터 빠지는 번호가 없도록 다시 채번할 것
 6. `on [윈도우id].destroy ... end on` 에서 dw_cond 가 포함된 라인을 찾아 지울 것
 7. 위 1~5번까지 처리 완료 후 남은 소스 전체에서 dw_cond 를 dw_input 으로 일괄 변경
+
+
+어제 진행했던 패턴4 말인데, 생각해보니 2가지 방식이 있을 수 있을거
+같아. 하나는 지금처럼, 다른 하나는 dw_cond 를 그대로 두면서 dw_input
+을 안보이게 하는 방법. 그래서 패턴4 는 둘중 하나를 선택하는
+라디오버튼이 추가로 선택 가능해야 할거 같아. 물론 dw_input 이 안보이게
+하는 처리는 소스에 dw_input 검색해서 없을 경우에만
+
 
 구체적인 예시 자료는 아래를 참조해.
 
