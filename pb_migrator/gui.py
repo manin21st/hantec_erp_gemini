@@ -55,14 +55,16 @@ class MainApplication(tk.Frame):
         self.last_reports = []
         self.last_selected_path = None
 
-        self.create_menu()
+        # Temporarily increase recursion limit for complex diffs
+        sys.setrecursionlimit(2000) 
+
+        self._create_menu()
         self.create_statusbar()
         self.create_widgets()
-        
         self.setup_diff_highlighting()
         self.load_worklist()
 
-    def create_menu(self):
+    def _create_menu(self):
         """상단 메뉴 바를 생성합니다."""
         menubar = tk.Menu(self.parent)
         self.parent.config(menu=menubar)
@@ -214,23 +216,103 @@ class MainApplication(tk.Frame):
         self.migrated_text.tag_configure("replace", background="#ffffdd")
 
     def highlight_diff(self, original_code, migrated_code):
+        self.original_text.config(state=tk.NORMAL)
+        self.migrated_text.config(state=tk.NORMAL)
         self.original_text.delete('1.0', tk.END)
         self.migrated_text.delete('1.0', tk.END)
-        self.original_text.insert('1.0', original_code)
-        self.migrated_text.insert('1.0', migrated_code)
+
+        if not original_code and not migrated_code:
+            self.original_text.config(state=tk.DISABLED)
+            self.migrated_text.config(state=tk.DISABLED)
+            return
 
         original_lines = original_code.splitlines(True)
         migrated_lines = migrated_code.splitlines(True)
 
-        d = difflib.SequenceMatcher(None, original_lines, migrated_lines)
-        for tag, i1, i2, j1, j2 in d.get_opcodes():
-            if tag == 'replace':
-                self.original_text.tag_add("replace", f"{i1 + 1}.0", f"{i2}.0 + {len(original_lines[i2-1])} chars")
-                self.migrated_text.tag_add("replace", f"{j1 + 1}.0", f"{j2}.0 + {len(migrated_lines[j2-1])} chars")
-            elif tag == 'delete':
-                self.original_text.tag_add("delete", f"{i1 + 1}.0", f"{i2}.0 + {len(original_lines[i2-1])} chars")
-            elif tag == 'insert':
-                self.migrated_text.tag_add("insert", f"{j1 + 1}.0", f"{j2}.0 + {len(migrated_lines[j2-1])} chars")
+        self._render_diff_lines(original_lines, migrated_lines)
+
+        self.original_text.config(state=tk.DISABLED)
+        self.migrated_text.config(state=tk.DISABLED)
+
+    def _render_diff_lines(self, orig_lines_slice, mig_lines_slice):
+        self.log(f"Entering _render_diff_lines. Orig slice length: {len(orig_lines_slice)}, Mig slice length: {len(mig_lines_slice)}")
+        try:
+            matcher = difflib.SequenceMatcher(None, orig_lines_slice, mig_lines_slice, autojunk=False)
+
+            for opcode_idx, (tag, i1, i2, j1, j2) in enumerate(matcher.get_opcodes()):
+                self.log(f"  Processing opcode {opcode_idx}: Tag={tag}, Orig lines [{i1}:{i2}], Mig lines [{j1}:{j2}]")
+                if tag == 'equal':
+                    for i in range(i1, i2):
+                        self.original_text.insert(tk.END, orig_lines_slice[i])
+                        self.migrated_text.insert(tk.END, mig_lines_slice[j1 + (i - i1)])
+                
+                elif tag == 'delete':
+                    for i in range(i1, i2):
+                        self.original_text.insert(tk.END, orig_lines_slice[i], "delete")
+                        self.migrated_text.insert(tk.END, "\n")
+
+                elif tag == 'insert':
+                    for i in range(j1, j2):
+                        self.original_text.insert(tk.END, "\n")
+                        self.migrated_text.insert(tk.END, mig_lines_slice[i], "insert")
+                
+                elif tag == 'replace':
+                    num_orig = i2 - i1
+                    num_mig = j2 - j1
+
+                    orig_block = "".join(orig_lines_slice[i1:i2])
+                    mig_block = "".join(mig_lines_slice[j1:j2])
+                    
+                    s = difflib.SequenceMatcher(None, orig_block, mig_block, autojunk=False)
+                    ratio = s.ratio()
+                    
+                    self.log(f"    Replace block similarity ratio: {ratio:.2f}")
+
+                    if ratio < 0.4:
+                        # Low similarity implies a delete and insert, not a modification.
+                        # First, check if the migrated block is effectively empty.
+                        is_mig_block_effectively_empty = not mig_block.strip()
+
+                        if is_mig_block_effectively_empty:
+                            # This is a semantic delete.
+                            self.log("    Treating as semantic delete due to low similarity and empty migrated block.")
+                            for i in range(i1, i2):
+                                self.original_text.insert(tk.END, orig_lines_slice[i], "delete")
+                                self.migrated_text.insert(tk.END, "\n")
+                        else:
+                            # This is a true delete and insert.
+                            self.log("    Treating as delete and insert due to low similarity.")
+                            for i in range(i1, i2):
+                                self.original_text.insert(tk.END, orig_lines_slice[i], "delete")
+                            for j in range(j1, j2):
+                                self.migrated_text.insert(tk.END, mig_lines_slice[j], "insert")
+                            
+                            # Pad the shorter side to maintain alignment
+                            if num_orig > num_mig:
+                                for _ in range(num_orig - num_mig):
+                                    self.migrated_text.insert(tk.END, "\n")
+                            elif num_mig > num_orig:
+                                for _ in range(num_mig - num_orig):
+                                    self.original_text.insert(tk.END, "\n")
+                    else:
+                        # High similarity, treat as a standard 'replace' (yellow)
+                        self.log(f"    Standard replace block. Orig lines: {num_orig}, Mig lines: {num_mig}")
+                        max_lines = max(num_orig, num_mig)
+                        for i in range(max_lines):
+                            if i < num_orig:
+                                self.original_text.insert(tk.END, orig_lines_slice[i1 + i], "replace")
+                            else:
+                                self.original_text.insert(tk.END, '\n')
+
+                            if i < num_mig:
+                                self.migrated_text.insert(tk.END, mig_lines_slice[j1 + i], "replace")
+                            else:
+                                self.migrated_text.insert(tk.END, '\n')
+        except Exception as e:
+            self.log(f"ERROR in _render_diff_lines: {e}")
+            messagebox.showerror("Diff Rendering Error", f"An error occurred during diff rendering: {e}")
+        finally:
+            self.log(f"Exiting _render_diff_lines.")
 
     def load_worklist(self):
         """'source' 디렉토리에서 .srw 파일 목록을 재귀적으로 불러와 리스트박스에 채웁니다."""
