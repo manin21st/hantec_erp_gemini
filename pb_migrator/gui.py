@@ -257,57 +257,73 @@ class MainApplication(tk.Frame):
                         self.migrated_text.insert(tk.END, mig_lines_slice[i], "insert")
                 
                 elif tag == 'replace':
-                    num_orig = i2 - i1
-                    num_mig = j2 - j1
-
-                    orig_block = "".join(orig_lines_slice[i1:i2])
-                    mig_block = "".join(mig_lines_slice[j1:j2])
+                    self.log("    Entering 'find the anchor' logic for 'replace' block.")
+                    orig_sub_lines = orig_lines_slice[i1:i2]
+                    mig_sub_lines = mig_lines_slice[j1:j2]
                     
-                    s = difflib.SequenceMatcher(None, orig_block, mig_block, autojunk=False)
-                    ratio = s.ratio()
+                    best_ratio = -1.0
+                    best_orig_idx = -1
+                    best_mig_idx = -1
+
+                    # Brute-force find the best matching line pair (the anchor)
+                    for i, orig_line in enumerate(orig_sub_lines):
+                        for j, mig_line in enumerate(mig_sub_lines):
+                            s = difflib.SequenceMatcher(None, orig_line, mig_line, autojunk=False)
+                            ratio = s.ratio()
+                            if ratio > best_ratio:
+                                best_ratio = ratio
+                                best_orig_idx = i
+                                best_mig_idx = j
                     
-                    self.log(f"    Replace block similarity ratio: {ratio:.2f}")
+                    self.log(f"    Best anchor match found with ratio {best_ratio:.2f} at (orig:{best_orig_idx}, mig:{best_mig_idx})")
 
-                    if ratio < 0.4:
-                        # Low similarity implies a delete and insert, not a modification.
-                        # First, check if the migrated block is effectively empty.
-                        is_mig_block_effectively_empty = not mig_block.strip()
-
-                        if is_mig_block_effectively_empty:
-                            # This is a semantic delete.
-                            self.log("    Treating as semantic delete due to low similarity and empty migrated block.")
-                            for i in range(i1, i2):
-                                self.original_text.insert(tk.END, orig_lines_slice[i], "delete")
+                    # If a reasonably good anchor was found, render around it
+                    if best_ratio > 0.5:
+                        self.log(f"    Rendering around anchor (orig:{best_orig_idx}, mig:{best_mig_idx}). All will be 'replace' (yellow).")
+                        
+                        # Render the "before" sections, padding the shorter one
+                        orig_before_count = best_orig_idx
+                        mig_before_count = best_mig_idx
+                        for i in range(max(orig_before_count, mig_before_count)):
+                            if i < orig_before_count:
+                                self.original_text.insert(tk.END, orig_sub_lines[i], "replace")
+                            else:
+                                self.original_text.insert(tk.END, "\n")
+                                
+                            if i < mig_before_count:
+                                self.migrated_text.insert(tk.END, mig_sub_lines[i], "replace")
+                            else:
                                 self.migrated_text.insert(tk.END, "\n")
-                        else:
-                            # This is a true delete and insert.
-                            self.log("    Treating as delete and insert due to low similarity.")
-                            for i in range(i1, i2):
-                                self.original_text.insert(tk.END, orig_lines_slice[i], "delete")
-                            for j in range(j1, j2):
-                                self.migrated_text.insert(tk.END, mig_lines_slice[j], "insert")
-                            
-                            # Pad the shorter side to maintain alignment
-                            if num_orig > num_mig:
-                                for _ in range(num_orig - num_mig):
-                                    self.migrated_text.insert(tk.END, "\n")
-                            elif num_mig > num_orig:
-                                for _ in range(num_mig - num_orig):
-                                    self.original_text.insert(tk.END, "\n")
-                    else:
-                        # High similarity, treat as a standard 'replace' (yellow)
-                        self.log(f"    Standard replace block. Orig lines: {num_orig}, Mig lines: {num_mig}")
-                        max_lines = max(num_orig, num_mig)
-                        for i in range(max_lines):
-                            if i < num_orig:
-                                self.original_text.insert(tk.END, orig_lines_slice[i1 + i], "replace")
-                            else:
-                                self.original_text.insert(tk.END, '\n')
 
-                            if i < num_mig:
-                                self.migrated_text.insert(tk.END, mig_lines_slice[j1 + i], "replace")
+                        # Render the anchor line itself (already marked as replace)
+                        self.original_text.insert(tk.END, orig_sub_lines[best_orig_idx], "replace")
+                        self.migrated_text.insert(tk.END, mig_sub_lines[best_mig_idx], "replace")
+
+                        # Render the "after" sections
+                        orig_after_count = len(orig_sub_lines) - (best_orig_idx + 1)
+                        mig_after_count = len(mig_sub_lines) - (best_mig_idx + 1)
+                        for i in range(max(orig_after_count, mig_after_count)):
+                            orig_idx = best_orig_idx + 1 + i
+                            mig_idx = best_mig_idx + 1 + i
+                            
+                            if i < orig_after_count:
+                                self.original_text.insert(tk.END, orig_sub_lines[orig_idx], "replace")
                             else:
-                                self.migrated_text.insert(tk.END, '\n')
+                                self.original_text.insert(tk.END, "\n")
+                            
+                            if i < mig_after_count:
+                                self.migrated_text.insert(tk.END, mig_sub_lines[mig_idx], "replace")
+                            else:
+                                self.migrated_text.insert(tk.END, "\n")
+                    else:
+                        # Fallback for low similarity: treat as a simple delete and insert
+                        self.log("    No good anchor found. Treating as delete and insert.")
+                        for line in orig_sub_lines:
+                            self.original_text.insert(tk.END, line, "delete")
+                            self.migrated_text.insert(tk.END, "\n")
+                        for line in mig_sub_lines:
+                            self.original_text.insert(tk.END, "\n")
+                            self.migrated_text.insert(tk.END, line, "insert")
         except Exception as e:
             self.log(f"ERROR in _render_diff_lines: {e}")
             messagebox.showerror("Diff Rendering Error", f"An error occurred during diff rendering: {e}")
